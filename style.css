@@ -555,6 +555,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @media (max-width: 768px) {
     .app-container {
         padding: 1rem;
+        padding-bottom: 7rem;
     }
 
     .main-layout {
@@ -582,6 +583,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     
     .card-image {
         height: 150px;
+    }
+    .mobile-bottom-action {
+        display: block;
     }
 }
 

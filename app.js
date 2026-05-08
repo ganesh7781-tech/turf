@@ -114,8 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateButtonStates() {
-        const btn = currentService === 'turf' ? document.getElementById('turf-book-btn-desktop') : document.getElementById('swim-book-btn-desktop');
-        btn.disabled = !selectedSlot;
+        const btnDesktop = currentService === 'turf' ? document.getElementById('turf-book-btn-desktop') : document.getElementById('swim-book-btn-desktop');
+        const btnMobile = currentService === 'turf' ? document.getElementById('turf-book-btn-mobile') : document.getElementById('swim-book-btn-mobile');
+        
+        const isDisabled = !selectedSlot;
+        if (btnDesktop) btnDesktop.disabled = isDisabled;
+        if (btnMobile) {
+            btnMobile.disabled = isDisabled;
+            const subtitle = btnMobile.querySelector('.btn-subtitle');
+            if (subtitle) {
+                subtitle.textContent = selectedSlot ? `Slot: ${selectedSlot.time}` : 'Select a slot to proceed';
+            }
+        }
     }
 
     // FORM SUBMISSIONS
