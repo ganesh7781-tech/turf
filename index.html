@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Boisar Turf Booking</title>
+    <title>K6 Turf & Swimming</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,235 +11,143 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            gap: 2rem;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .landing-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .landing-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .landing-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .choice-card {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-align: center;
+            text-decoration: none;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .choice-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px -15px rgba(16, 185, 129, 0.2);
+        }
+
+        .choice-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            background: var(--primary-light);
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px;
+            transition: var(--transition);
+        }
+
+        .choice-card:hover .choice-icon {
+            background: var(--primary);
+            color: white;
+        }
+
+        .choice-content h2 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .choice-content p {
+            color: var(--text-muted);
+        }
+
+        .choice-btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .choice-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        
-        <header class="app-header">
-            <div class="logo-container">
-                <i class="ph-fill ph-baseball"></i>
-                <h1>Boisar Turf</h1>
-            </div>
-            <p>Select your preferred time and book instantly.</p>
-        </header>
-
-        <main class="main-layout">
-            <!-- Left Column: Booking Form -->
-            <aside class="booking-sidebar">
-                <div class="card form-card">
-                    <h2 class="desktop-only">Book Your Slot</h2>
-                    
-                    <form id="booking-form" class="booking-form">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <div class="input-wrapper">
-                                <i class="ph ph-user"></i>
-                                <input type="text" id="name" placeholder="Enter your full name" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="whatsapp">WhatsApp Number</label>
-                            <div class="input-wrapper">
-                                <i class="ph ph-whatsapp-logo"></i>
-                                <input type="tel" id="whatsapp" placeholder="Enter your WhatsApp number" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="duration">Playing Time</label>
-                            <div class="input-wrapper">
-                                <i class="ph ph-hourglass"></i>
-                                <select id="duration" required>
-                                    <option value="1">1 Hour</option>
-                                    <option value="1.5">1.5 Hours</option>
-                                    <option value="2">2 Hours</option>
-                                </select>
-                                <i class="ph ph-caret-down select-arrow"></i>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="date">Select Date</label>
-                            <div class="input-wrapper">
-                                <i class="ph ph-calendar-blank"></i>
-                                <input type="date" id="date" required>
-                            </div>
-                        </div>
-
-                        <div class="desktop-action">
-                            <button type="submit" class="btn-primary" id="book-btn-desktop" disabled>
-                                <div class="btn-content">
-                                    <span class="btn-title">Review & Book</span>
-                                    <span class="btn-subtitle">Select a time slot first</span>
-                                </div>
-                                <i class="ph ph-arrow-right"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </aside>
-
-            <!-- Right Column: Slots -->
-            <section class="slots-container">
-                <div class="card slots-card">
-                    <div class="slots-header" style="border-bottom: 2px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-                        <h2 style="display:flex; align-items:center; gap:0.5rem; font-size:1.5rem;"><i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Select Slot</h2>
-                        <div class="date-display" id="display-date" style="background:var(--primary-light); color:var(--primary); padding:0.5rem 1.25rem; border-radius:var(--radius-full); font-weight:700; font-size:0.875rem; box-shadow:var(--shadow-sm);">Today</div>
-                    </div>
-
-                    <!-- Morning Slots -->
-                    <div class="slot-section">
-                        <h3 class="section-title">
-                            <i class="ph ph-sun-horizon"></i>
-                            Morning
-                        </h3>
-                        <div class="slots-grid" id="morning-slots">
-                            <!-- Slots generated via JS -->
-                        </div>
-                    </div>
-
-                    <!-- Afternoon Slots -->
-                    <div class="slot-section">
-                        <h3 class="section-title">
-                            <i class="ph ph-sun"></i>
-                            Afternoon
-                        </h3>
-                        <div class="slots-grid" id="afternoon-slots">
-                            <!-- Slots generated via JS -->
-                        </div>
-                    </div>
-
-                    <!-- Evening Slots -->
-                    <div class="slot-section">
-                        <h3 class="section-title">
-                            <i class="ph ph-cloud-moon"></i>
-                            Evening
-                        </h3>
-                        <div class="slots-grid" id="evening-slots">
-                            <!-- Slots generated via JS -->
-                        </div>
-                    </div>
-
-                    <!-- Night Slots -->
-                    <div class="slot-section">
-                        <h3 class="section-title">
-                            <i class="ph ph-moon"></i>
-                            Night
-                        </h3>
-                        <div class="slots-grid" id="night-slots">
-                            <!-- Slots generated via JS -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <!-- Mobile Sticky Bottom Action -->
-        <div class="mobile-bottom-action">
-            <button type="button" class="btn-primary" id="book-btn-mobile" disabled>
-                <div class="btn-content">
-                    <span class="btn-title">Review & Book</span>
-                    <span class="btn-subtitle" id="mobile-selected-info">Select a time slot first</span>
-                </div>
-                <i class="ph ph-arrow-right"></i>
-            </button>
+    <div class="landing-container">
+        <div class="landing-header">
+            <img src="k6 logo.png" alt="K6 Logo" style="width: 120px; height: 120px; border-radius: 50%; box-shadow: var(--shadow-lg); margin-bottom: 1.5rem; border: 3px solid white;">
+            <h1>Welcome to K6 Turf</h1>
+            <p>Select a service to proceed with your booking</p>
         </div>
 
-    </div>
+        <div class="choice-grid">
+            <a href="turf.html" class="choice-card">
+                <div class="choice-icon">
+                    <i class="ph-fill ph-baseball"></i>
+                </div>
+                <div class="choice-content">
+                    <h2>Book Turf</h2>
+                    <p>Experience the best football & cricket turf in Boisar.</p>
+                </div>
+                <div class="choice-btn">Go to Turf</div>
+            </a>
 
-    <!-- Booking Confirmation Modal -->
-    <div class="modal-overlay" id="success-modal">
-        <div class="modal confirm-modal">
-            <h2 class="modal-title">Confirm Your Booking</h2>
-            
-            <div class="confirm-details-card">
-                <div class="confirm-row">
-                    <i class="ph-fill ph-user"></i>
-                    <span><strong>Name:</strong> <span id="ticket-name">--</span></span>
+            <a href="swimming.html" class="choice-card">
+                <div class="choice-icon" style="color: #0ea5e9; background: #f0f9ff;">
+                    <i class="ph-fill ph-waves"></i>
                 </div>
-                <div class="confirm-row">
-                    <i class="ph-fill ph-calendar-blank"></i>
-                    <span><strong>Date:</strong> <span id="ticket-date">--</span></span>
+                <div class="choice-content">
+                    <h2>Book Swimming</h2>
+                    <p>Dive into our crystal clear premium pool.</p>
                 </div>
-                <div class="confirm-row">
-                    <i class="ph-fill ph-clock"></i>
-                    <span><strong>Time:</strong> <span id="ticket-time">--</span></span>
-                </div>
-                <div class="confirm-row">
-                    <i class="ph-fill ph-tag"></i>
-                    <span><strong>Price:</strong> <strong id="ticket-price" class="price-highlight">--</strong></span>
-                </div>
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn-cancel" id="cancel-booking">Cancel</button>
-                <button class="btn-confirm" id="confirm-booking">Yes, Confirm & Book</button>
-            </div>
+                <div class="choice-btn" style="background: #0ea5e9;">Go to Pool</div>
+            </a>
         </div>
     </div>
 
-    <!-- QR Payment Modal -->
-    <div class="modal-overlay" id="qr-modal">
-        <div class="modal qr-modal-content">
-            <h2 class="modal-title">Pay via UPI</h2>
-            <p style="margin-bottom: 1rem;">Scan the QR code below to pay <strong id="qr-price" class="price-highlight">₹0</strong></p>
-            
-            <div class="qr-container">
-                <img id="qr-image" src="" alt="UPI QR Code">
-            </div>
-
-            <div class="utr-section">
-                <label for="utr-input" style="display:block; text-align:left; font-size:0.875rem; font-weight:500; margin-bottom:0.5rem; color:var(--text-main);">Enter 12-digit UTR / Ref No.</label>
-                <div class="input-wrapper" style="margin-bottom: 1.5rem;">
-                    <i class="ph ph-receipt"></i>
-                    <input type="text" id="utr-input" placeholder="e.g. 312345678901" required maxlength="12" minlength="12">
-                </div>
-            </div>
-
-            <div class="modal-actions" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <button class="btn-confirm" id="verify-payment" disabled style="width: 100%;">Verify UPI Payment</button>
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border);">
-                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">OR</span>
-                    <hr style="flex: 1; border: none; border-top: 1px solid var(--border);">
-                </div>
-                <button class="btn-secondary" id="pay-at-venue" style="width: 100%; border: 2px solid var(--primary); font-weight: 700;">Pay at Venue</button>
-                <button class="btn-cancel" id="cancel-qr" style="width: 100%; background: transparent; text-decoration: underline; padding: 0.5rem;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Final Ticket Modal -->
-    <div class="modal-overlay" id="final-ticket-modal">
-        <div class="modal ticket-modal">
-            <div class="modal-icon success-icon">
-                <i class="ph-fill ph-check-circle"></i>
-            </div>
-            <h2 class="modal-title">Pre-booking Successful!</h2>
-            <p>Show this booking ID at the venue to confirm your slot.</p>
-            
-            <div class="booking-id-box">
-                <span class="booking-id-label">BOOKING ID</span>
-                <strong id="final-booking-id">--</strong>
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn-confirm" id="close-ticket">Done</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Floating Help Button -->
-    <a href="tel:+919999999999" class="floating-help-btn" title="Call for Booking Help">
-        <i class="ph-fill ph-phone-call"></i>
-    </a>
-
-    <script src="script.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed', err));
+                navigator.serviceWorker.register('sw.js');
             });
         }
     </script>

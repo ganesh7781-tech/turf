@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Generate real UPI link QR code for the specific price
         const amountStr = selectedPrice.replace(/[^0-9]/g, '');
-        const upiString = `upi://pay?pa=dummy@upi&pn=Boisar%20Turf&am=${amountStr}&cu=INR`;
+        const upiString = `upi://pay?pa=dummy@upi&pn=K6%20Turf&am=${amountStr}&cu=INR`;
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`;
         
         // Reset UTR
@@ -273,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const newBooking = {
             id: bookingId,
+            type: 'turf',
             name: document.getElementById('name').value,
             whatsapp: document.getElementById('whatsapp').value,
             date: dateInput.value,
@@ -297,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const newBooking = {
             id: bookingId,
+            type: 'turf',
             name: document.getElementById('name').value,
             whatsapp: document.getElementById('whatsapp').value,
             date: dateInput.value,

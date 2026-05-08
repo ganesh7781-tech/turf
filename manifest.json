@@ -1,15 +1,15 @@
 {
-  "name": "Boisar Turf",
-  "short_name": "Boisar Turf",
+  "name": "K6 Turf",
+  "short_name": "K6 Turf",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#10b981",
   "icons": [
     {
-      "src": "https://unpkg.com/@phosphor-icons/core@2.0.1/assets/fill/baseball-fill.svg",
+      "src": "k6 logo.png",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
