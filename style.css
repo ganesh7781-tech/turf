@@ -555,7 +555,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @media (max-width: 768px) {
     .app-container {
         padding: 1rem;
-        padding-bottom: 5.5rem;
     }
 
     .main-layout {
@@ -563,28 +562,26 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         gap: 1rem;
     }
     
-    .desktop-only {
+    .desktop-only, .desktop-action {
         display: none;
-    }
-    
-    .desktop-action {
-        display: none;
-    }
-    
-    .mobile-bottom-action {
-        display: block;
     }
     
     .card {
         padding: 1.25rem;
     }
+
+    /* Landing Page Mobile */
+    .landing-container {
+        padding: 1rem;
+    }
     
-    .floating-help-btn {
-        bottom: 5.5rem;
-        right: 1.5rem;
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
+    .choice-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .card-image {
+        height: 150px;
     }
 }
 
