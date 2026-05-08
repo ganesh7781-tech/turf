@@ -184,4 +184,14 @@ document.addEventListener('DOMContentLoaded', () => {
             initBookingPage();
         };
     });
+
+    // HIDDEN ADMIN ACCESS (Click logo 5 times in 3 seconds)
+    let clicks = 0;
+    window.logoClick = () => {
+        clicks++;
+        if (clicks >= 5) {
+            window.location.href = 'admin.html';
+        }
+        setTimeout(() => { clicks = 0; }, 3000);
+    };
 });

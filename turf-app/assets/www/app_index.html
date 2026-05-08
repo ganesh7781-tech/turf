@@ -86,7 +86,7 @@
 
     <div id="landing-view" class="view-section active">
         <div class="landing-container">
-            <img src="k6 logo.png" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; background: black;">
+            <img src="k6 logo.png" onclick="logoClick()" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; background: black;">
             <div class="landing-header">
                 <h1>K6 Turf</h1>
                 <p>Choose your service</p>
@@ -108,9 +108,6 @@
                     </div>
                     <div class="choice-btn" style="background:#0ea5e9;">Start Booking</div>
                 </div>
-            </div>
-            <div style="margin-top: 2rem; opacity: 0.6;">
-                <a href="admin.html" style="color: #64748b; text-decoration: none; font-size: 0.8rem;">Admin Panel</a>
             </div>
         </div>
     </div>
@@ -258,6 +255,16 @@
             document.getElementById('final-id').textContent = id;
             document.getElementById('ticket-modal').classList.add('active');
         };
+
+        // HIDDEN LOGO CLICK LOGIC
+        let clicks = 0;
+        function logoClick() {
+            clicks++;
+            if (clicks >= 5) {
+                window.location.href = "admin.html";
+            }
+            setTimeout(() => { clicks = 0; }, 3000);
+        }
     </script>
 </body>
 </html>
