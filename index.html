@@ -91,26 +91,34 @@
         .view-section.active { display: block; }
         
         .back-btn {
-            position: absolute;
+            position: fixed;
             top: 1.5rem;
             left: 1.5rem;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
+            background: var(--surface);
+            color: var(--primary);
+            border: 2px solid var(--primary-border);
+            padding: 0.6rem 1.25rem;
             border-radius: var(--radius-full);
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            font-weight: 600;
-            z-index: 10;
-            backdrop-filter: blur(4px);
+            font-weight: 700;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
         }
-        .back-btn:hover { background: rgba(255,255,255,0.3); }
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(-5px);
+            box-shadow: var(--shadow-glow);
+        }
 
         /* Custom Theme Overrides for Swimming */
         .swimming-theme .app-header { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+        .swimming-theme .back-btn { color: #0ea5e9; border-color: #bae6fd; }
+        .swimming-theme .back-btn:hover { background: #0ea5e9; color: white; }
         .swimming-theme .btn-primary { background: #0ea5e9; }
         .swimming-theme .btn-primary:hover { background: #0284c7; }
         .swimming-theme .date-display { background: #e0f2fe; color: #0369a1; }
