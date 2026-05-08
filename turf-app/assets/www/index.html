@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>K6 Turf & Swimming</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Landing Page Styles */
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            gap: 2rem;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+        .landing-header { text-align: center; margin-bottom: 1rem; }
+        .landing-header h1 { font-size: 2.5rem; color: var(--text-main); margin-bottom: 0.5rem; }
+        .landing-header p { color: var(--text-muted); font-size: 1.1rem; }
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 900px;
+        }
+        .choice-card {
+            background: var(--surface);
+            border-radius: 24px;
+            overflow: hidden;
+            text-decoration: none;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+        .card-image { width: 100%; height: 180px; overflow: hidden; }
+        .card-image img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
+        .choice-card:hover .card-image img { transform: scale(1.1); }
+        .choice-content {
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .choice-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px -15px rgba(16, 185, 129, 0.2);
+        }
+        .choice-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            background: var(--primary-light);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            margin-top: -3rem;
+            border: 4px solid white;
+            transition: var(--transition);
+        }
+        .choice-card:hover .choice-icon { background: var(--primary); color: white; transform: rotate(-10deg); }
+        .choice-btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            margin: 0 1.5rem 1.5rem 1.5rem;
+            text-align: center;
+        }
+
+        /* SPA Navigation Styles */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        
+        .back-btn {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* Custom Theme Overrides for Swimming */
+        .swimming-theme .app-header { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+        .swimming-theme .btn-primary { background: #0ea5e9; }
+        .swimming-theme .btn-primary:hover { background: #0284c7; }
+        .swimming-theme .date-display { background: #e0f2fe; color: #0369a1; }
+        .swimming-theme .price-highlight { color: #0ea5e9; }
+    </style>
+</head>
+<body class="turf-theme"> <!-- Default theme -->
+
+    <!-- 1. LANDING VIEW -->
+    <div id="landing-view" class="view-section active">
+        <div class="landing-container">
+            <div class="landing-header">
+                <img src="k6 logo.png" alt="K6 Logo" style="width: 150px; height: 150px; border-radius: 50%; border: 5px solid white; box-shadow: var(--shadow-xl); margin-bottom: 2rem; background: black;">
+                <h1>Welcome to K6 Turf</h1>
+                <p>Select a service to proceed with your booking</p>
+            </div>
+
+            <div class="choice-grid">
+                <div class="choice-card" onclick="showView('turf')">
+                    <div class="card-image">
+                        <img src="turf_preview.png" alt="Football Turf">
+                    </div>
+                    <div class="choice-content">
+                        <div class="choice-icon">
+                            <i class="ph-fill ph-baseball"></i>
+                        </div>
+                        <h2>Book Turf</h2>
+                        <p>Premium football & cricket turf with pro lighting.</p>
+                    </div>
+                    <div class="choice-btn">Go to Turf</div>
+                </div>
+
+                <div class="choice-card" onclick="showView('swimming')">
+                    <div class="card-image">
+                        <img src="swimming_preview.png" alt="Swimming Pool">
+                    </div>
+                    <div class="choice-content">
+                        <div class="choice-icon" style="color: #0ea5e9; background: #f0f9ff;">
+                            <i class="ph-fill ph-waves"></i>
+                        </div>
+                        <h2>Book Swimming</h2>
+                        <p>Crystal clear pool for the perfect dive.</p>
+                    </div>
+                    <div class="choice-btn" style="background: #0ea5e9;">Go to Pool</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TURF BOOKING VIEW -->
+    <div id="turf-view" class="view-section">
+        <button class="back-btn" onclick="showView('landing')"><i class="ph ph-arrow-left"></i> Back</button>
+        <div class="app-container">
+            <header class="app-header">
+                <div class="logo-container">
+                    <img src="k6 logo.png" alt="K6 Logo" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid white; box-shadow: var(--shadow-md); background: black;">
+                    <h1>K6 Turf</h1>
+                </div>
+                <p>Select your preferred time and book instantly.</p>
+            </header>
+
+            <main class="main-layout">
+                <aside class="booking-sidebar">
+                    <div class="card form-card">
+                        <h2 class="desktop-only">Book Your Slot</h2>
+                        <form id="turf-form" class="booking-form">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="turf-name" placeholder="Enter your full name" required></div>
+                            </div>
+                            <div class="form-group">
+                                <label>WhatsApp Number</label>
+                                <div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="turf-whatsapp" placeholder="Enter WhatsApp number" required></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Playing Time</label>
+                                <div class="input-wrapper">
+                                    <i class="ph ph-hourglass"></i>
+                                    <select id="turf-duration" required>
+                                        <option value="1">1 Hour</option>
+                                        <option value="1.5">1.5 Hours</option>
+                                        <option value="2">2 Hours</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Select Date</label>
+                                <div class="input-wrapper"><i class="ph ph-calendar-blank"></i><input type="date" id="turf-date" required></div>
+                            </div>
+                            <div class="desktop-action">
+                                <button type="submit" class="btn-primary" id="turf-book-btn-desktop" disabled>Review & Book</button>
+                            </div>
+                        </form>
+                    </div>
+                </aside>
+
+                <section class="slots-container">
+                    <div class="card slots-card">
+                        <div class="slots-header">
+                            <h2><i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Select Slot</h2>
+                            <div class="date-display" id="turf-display-date">Today</div>
+                        </div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun-horizon"></i> Morning</h3><div class="slots-grid" id="turf-morning-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun"></i> Afternoon</h3><div class="slots-grid" id="turf-afternoon-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-cloud-moon"></i> Evening</h3><div class="slots-grid" id="turf-evening-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-moon"></i> Night</h3><div class="slots-grid" id="turf-night-slots"></div></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- 3. SWIMMING BOOKING VIEW -->
+    <div id="swimming-view" class="view-section swimming-theme">
+        <button class="back-btn" onclick="showView('landing')"><i class="ph ph-arrow-left"></i> Back</button>
+        <div class="app-container">
+            <header class="app-header">
+                <div class="logo-container">
+                    <img src="k6 logo.png" alt="K6 Logo" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid white; box-shadow: var(--shadow-md); background: black;">
+                    <h1>K6 Swimming</h1>
+                </div>
+                <p>Dive into refreshment. Book your pool slot now.</p>
+            </header>
+
+            <main class="main-layout">
+                <aside class="booking-sidebar">
+                    <div class="card form-card">
+                        <h2 class="desktop-only">Pool Booking</h2>
+                        <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 0.75rem; border-radius: 12px; margin-bottom: 1rem; font-size: 0.85rem; color: #0369a1;">
+                            <i class="ph-fill ph-info"></i> ₹100 per person
+                        </div>
+                        <form id="swimming-form" class="booking-form">
+                            <div class="form-group"><label>Full Name</label><div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="swim-name" placeholder="Full name" required></div></div>
+                            <div class="form-group"><label>WhatsApp</label><div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="swim-whatsapp" placeholder="WhatsApp" required></div></div>
+                            <div class="form-group"><label>People Count</label><div class="input-wrapper"><i class="ph ph-users"></i><input type="number" id="swim-people" value="1" min="1" required></div></div>
+                            <div class="form-group"><label>Select Date</label><div class="input-wrapper"><i class="ph ph-calendar-blank"></i><input type="date" id="swim-date" required></div></div>
+                            <div class="desktop-action">
+                                <button type="submit" class="btn-primary" id="swim-book-btn-desktop" disabled>Review & Book</button>
+                            </div>
+                        </form>
+                    </div>
+                </aside>
+
+                <section class="slots-container">
+                    <div class="card slots-card">
+                        <div class="slots-header">
+                            <h2><i class="ph-fill ph-waves" style="color:#0ea5e9;"></i> Sessions</h2>
+                            <div class="date-display" id="swim-display-date">Today</div>
+                        </div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun-horizon"></i> Morning</h3><div class="slots-grid" id="swim-morning-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun"></i> Afternoon</h3><div class="slots-grid" id="swim-afternoon-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-cloud-moon"></i> Evening</h3><div class="slots-grid" id="swim-evening-slots"></div></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- SHARED MODALS -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal confirm-modal">
+            <h2 class="modal-title">Confirm Booking</h2>
+            <div class="confirm-details-card" id="confirm-details">
+                <!-- Details injected via JS -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('confirm-modal')">Cancel</button>
+                <button class="btn-confirm" id="final-confirm-btn">Confirm & Pay</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="qr-modal">
+        <div class="modal qr-modal-content">
+            <h2 class="modal-title">Pay via UPI</h2>
+            <p>Pay <strong id="qr-price" class="price-highlight">₹0</strong></p>
+            <div class="qr-container"><img id="qr-image" src="" alt="QR"></div>
+            <div class="utr-section">
+                <label>Enter 12-digit UTR No.</label>
+                <div class="input-wrapper"><i class="ph ph-receipt"></i><input type="text" id="utr-input" placeholder="UTR Number" maxlength="12"></div>
+            </div>
+            <div class="modal-actions" style="display:flex; flex-direction:column; gap:0.5rem;">
+                <button class="btn-confirm" id="verify-btn" disabled style="width:100%">Verify Payment</button>
+                <button class="btn-secondary" id="venue-btn" style="width:100%">Pay at Venue</button>
+                <button class="btn-cancel" onclick="closeModal('qr-modal')" style="width:100%">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="ticket-modal">
+        <div class="modal ticket-modal">
+            <div class="modal-icon success-icon"><i class="ph-fill ph-check-circle"></i></div>
+            <h2 class="modal-title">Successful!</h2>
+            <div class="booking-id-box"><span class="booking-id-label">BOOKING ID</span><strong id="final-id">--</strong></div>
+            <button class="btn-confirm" onclick="location.reload()">Done</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
