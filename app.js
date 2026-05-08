@@ -175,10 +175,15 @@ document.addEventListener('DOMContentLoaded', () => {
             date: currentService === 'turf' ? turfDateInput.value : swimDateInput.value,
             time: selectedSlot.time,
             price: confirmModal.dataset.finalPrice,
+            status: 'confirmed',
             timestamp: new Date().toISOString()
         };
-        currentBookings.push(newBooking);
-        localStorage.setItem('turf_bookings', JSON.stringify(currentBookings));
+        
+        // Always fetch latest data before saving
+        const latestBookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
+        latestBookings.push(newBooking);
+        localStorage.setItem('turf_bookings', JSON.stringify(latestBookings));
+        
         qrModal.classList.remove('active');
         document.getElementById('final-id').textContent = id;
         ticketModal.classList.add('active');
