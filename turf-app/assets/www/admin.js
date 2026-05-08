@@ -11,6 +11,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const applyFilterBtn = document.getElementById('apply-filter');
     const resetFilterBtn = document.getElementById('reset-filter');
     const exportCsvBtn = document.getElementById('export-csv');
+    const typeFilter = document.getElementById('type-filter');
+    
+    // LOGIN LOGIC
+    const loginOverlay = document.getElementById('login-overlay');
+    const adminMain = document.getElementById('admin-main');
+    const passwordInput = document.getElementById('admin-password');
+    const loginError = document.getElementById('login-error');
+
+    window.verifyAdmin = function() {
+        const pass = passwordInput.value;
+        if (pass === 'k6admin') { // Hardcoded password
+            sessionStorage.setItem('admin_logged_in', 'true');
+            showDashboard();
+        } else {
+            loginError.style.display = 'block';
+            passwordInput.value = '';
+        }
+    };
+
+    function showDashboard() {
+        loginOverlay.style.display = 'none';
+        adminMain.style.display = 'block';
+        loadBookings();
+    }
+
+    // Check if already logged in for this session
+    if (sessionStorage.getItem('admin_logged_in') === 'true') {
+        showDashboard();
+    }
+    
     
     let currentFilteredBookings = [];
 
@@ -43,6 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 bDate.setHours(0, 0, 0, 0);
                 return bDate <= endObj;
             });
+        }
+
+        if (typeFilter && typeFilter.value !== 'all') {
+            bookings = bookings.filter(b => b.type === typeFilter.value);
         }
 
         // Save current filtered list for export
@@ -80,6 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tr.innerHTML = `
                 <td><strong>${booking.id || 'N/A'}</strong></td>
+                <td>
+                    <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:0.75rem; font-weight:700; text-transform:uppercase; color:${booking.type === 'swimming' ? '#0ea5e9' : '#10b981'};">
+                        <i class="ph-fill ${booking.type === 'swimming' ? 'ph-waves' : 'ph-baseball'}"></i>
+                        ${booking.type || 'Turf'}
+                    </span>
+                </td>
                 <td>${booking.name || 'Unknown'}</td>
                 <td>
                     <a href="https://wa.me/${booking.whatsapp.replace(/[^0-9]/g, '')}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 500;">
@@ -176,10 +216,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const idx = bookings.findIndex(b => b.id === id);
         if (idx > -1) {
             bookings[idx].time = newTime;
-            bookings[idx].price = getPriceForSlot(newTime);
+            // Only update price automatically for Turf (since swimming price is per person)
+            if (bookings[idx].type === 'turf') {
+                bookings[idx].price = getPriceForSlot(newTime);
+            }
             localStorage.setItem('turf_bookings', JSON.stringify(bookings));
             editingId = null;
-            loadBookings();
+            loadBookings(filterFrom.value, filterTo.value);
         }
     };
 
@@ -194,6 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
         loadBookings(filterFrom.value, filterTo.value);
     });
 
+    if (typeFilter) {
+        typeFilter.addEventListener('change', () => {
+            loadBookings(filterFrom.value, filterTo.value);
+        });
+    }
+
     resetFilterBtn.addEventListener('click', () => {
         filterFrom.value = '';
         filterTo.value = '';
@@ -207,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // CSV Header
-        let csvContent = "Booking ID,Player Name,WhatsApp,Date,Time Slot,Price,Status,Payment Info\n";
+        let csvContent = "Booking ID,Type,Player Name,WhatsApp,Date,Time Slot,Price,Status,Payment Info\n";
 
         currentFilteredBookings.forEach(b => {
             const id = `"${b.id || ''}"`;
@@ -216,10 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const date = `"${b.date || ''}"`;
             const time = `"${b.time || ''}"`;
             const price = `"${(b.price || '').replace('₹', 'Rs. ')}"`;
+            const type = `"${b.type || 'turf'}"`;
             const status = `"${b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}"`;
             const utr = `"${b.utr || ''}"`;
 
-            csvContent += `${id},${name},${phone},${date},${time},${price},${status},${utr}\n`;
+            csvContent += `${id},${type},${name},${phone},${date},${time},${price},${status},${utr}\n`;
         });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

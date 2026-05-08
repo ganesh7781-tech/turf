@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Boisar Turf - Admin Dashboard</title>
+    <title>K6 Turf - Admin Dashboard</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -162,12 +162,108 @@
         }
     </style>
 </head>
+    <style>
+        /* Login Overlay Styles */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1.5rem;
+        }
+
+        .login-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card .logo-container {
+            margin-bottom: 2rem;
+        }
+
+        .login-card h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .login-card p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .login-input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .login-input-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .login-input-group input {
+            padding-left: 1rem;
+            background: #f1f5f9;
+        }
+
+        #login-error {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .admin-content {
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
 <body>
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <div class="logo-container">
+                <img src="k6 logo.png" alt="K6 Logo" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #10b981; background: black;">
+            </div>
+            <h2>Admin Login</h2>
+            <p>Enter password to manage K6 Turf</p>
+            
+            <div class="login-input-group">
+                <label>Password</label>
+                <input type="password" id="admin-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') verifyAdmin()">
+            </div>
+            
+            <button class="btn-confirm" onclick="verifyAdmin()" style="width: 100%; background: #10b981; padding: 1rem; font-size: 1rem;">Login to Dashboard</button>
+            <div id="login-error">Incorrect password. Please try again.</div>
+            <p style="margin-top: 1.5rem; font-size: 0.8rem;">
+                <a href="index.html" style="color: var(--primary); text-decoration: none;">← Back to Website</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="admin-content" id="admin-main">
+
     <div class="admin-container">
         <header class="app-header" style="padding: 1.5rem;">
             <div class="logo-container">
-                <i class="ph-fill ph-baseball"></i>
-                <h1 style="font-size: 1.5rem;">Boisar Turf Admin</h1>
+                <img src="k6 logo.png" alt="K6 Logo" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid white;">
+                <h1 style="font-size: 1.5rem;">K6 Turf Admin</h1>
             </div>
             <p>Manage your bookings and view players.</p>
         </header>
@@ -199,6 +295,14 @@
 
         <div class="filters-container" style="background:var(--surface); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:1.5rem; display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;">
             <div>
+                <label style="display:block; font-size:0.75rem; color:var(--text-muted); font-weight:600; margin-bottom:0.25rem;">Category</label>
+                <select id="type-filter" style="padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit;">
+                    <option value="all">All Services</option>
+                    <option value="turf">Turf Only</option>
+                    <option value="swimming">Swimming Only</option>
+                </select>
+            </div>
+            <div>
                 <label style="display:block; font-size:0.75rem; color:var(--text-muted); font-weight:600; margin-bottom:0.25rem;">From Date</label>
                 <input type="date" id="filter-from" style="padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit;">
             </div>
@@ -215,6 +319,7 @@
                 <thead>
                     <tr>
                         <th><i class="ph ph-hash"></i> ID</th>
+                        <th>Type</th>
                         <th><i class="ph ph-user"></i> Player</th>
                         <th><i class="ph ph-whatsapp-logo"></i> WhatsApp</th>
                         <th><i class="ph ph-calendar"></i> Date</th>
@@ -234,6 +339,8 @@
             </div>
         </div>
     </div>
+
+    </div> <!-- End admin-main -->
 
     <script src="admin.js"></script>
     <script>

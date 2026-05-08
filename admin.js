@@ -13,6 +13,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportCsvBtn = document.getElementById('export-csv');
     const typeFilter = document.getElementById('type-filter');
     
+    // LOGIN LOGIC
+    const loginOverlay = document.getElementById('login-overlay');
+    const adminMain = document.getElementById('admin-main');
+    const passwordInput = document.getElementById('admin-password');
+    const loginError = document.getElementById('login-error');
+
+    window.verifyAdmin = function() {
+        const pass = passwordInput.value;
+        if (pass === 'k6admin') { // Hardcoded password
+            sessionStorage.setItem('admin_logged_in', 'true');
+            showDashboard();
+        } else {
+            loginError.style.display = 'block';
+            passwordInput.value = '';
+        }
+    };
+
+    function showDashboard() {
+        loginOverlay.style.display = 'none';
+        adminMain.style.display = 'block';
+        loadBookings();
+    }
+
+    // Check if already logged in for this session
+    if (sessionStorage.getItem('admin_logged_in') === 'true') {
+        showDashboard();
+    }
+    
+    
     let currentFilteredBookings = [];
 
     const allSlots = [
