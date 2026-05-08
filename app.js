@@ -1,194 +1,187 @@
-// View Switching
-function showView(view) {
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    document.getElementById(`view-${view}`).classList.add('active');
-    window.scrollTo(0, 0);
-}
-
-// Global State
-let currentType = 'turf';
-let selectedSlot = null;
-let selectedPrice = null;
-
-// Turf Data
-const turfSlots = [
-    { time: '11:30 AM - 12:30 PM', basePrice: 500 },
-    { time: '12:00 PM - 01:00 PM', basePrice: 500 },
-    { time: '01:00 PM - 02:00 PM', basePrice: 500 },
-    { time: '02:00 PM - 03:00 PM', basePrice: 500 },
-    { time: '03:00 PM - 04:00 PM', basePrice: 500 },
-    { time: '04:00 PM - 05:00 PM', basePrice: 500 },
-    { time: '04:30 PM - 05:30 PM', basePrice: 600 },
-    { time: '05:00 PM - 06:00 PM', basePrice: 700 },
-    { time: '06:00 PM - 07:00 PM', basePrice: 700 },
-    { time: '07:00 PM - 08:00 PM', basePrice: 700 },
-    { time: '08:00 PM - 09:00 PM', basePrice: 700 },
-    { time: '09:00 PM - 10:00 PM', basePrice: 700 },
-    { time: '10:00 PM - 11:00 PM', basePrice: 700 },
-    { time: '11:00 PM - 12:00 AM', basePrice: 700 }
-];
-
-// Swimming Data
-const swimSlots = [
-    { time: '07:00 AM - 08:00 AM', price: 100 },
-    { time: '08:00 AM - 09:00 AM', price: 100 },
-    { time: '03:00 PM - 04:00 PM', price: 100 },
-    { time: '04:00 PM - 05:00 PM', price: 100 },
-    { time: '05:00 PM - 06:00 PM', price: 100 },
-    { time: '06:00 PM - 07:00 PM', price: 100 }
-];
-
 document.addEventListener('DOMContentLoaded', () => {
-    initDateInputs();
-    setupEventListeners();
-    renderAllSlots();
-});
+    // STATE
+    let currentService = 'turf'; // 'turf' or 'swimming'
+    let selectedSlot = null;
+    let currentBookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
 
-function initDateInputs() {
+    // DOM ELEMENTS - VIEWS
+    const views = {
+        landing: document.getElementById('landing-view'),
+        turf: document.getElementById('turf-view'),
+        swimming: document.getElementById('swimming-view')
+    };
+
+    // DOM ELEMENTS - TURF
+    const turfForm = document.getElementById('turf-form');
+    const turfDateInput = document.getElementById('turf-date');
+    const turfSlots = {
+        morning: document.getElementById('turf-morning-slots'),
+        afternoon: document.getElementById('turf-afternoon-slots'),
+        evening: document.getElementById('turf-evening-slots'),
+        night: document.getElementById('turf-night-slots')
+    };
+
+    // DOM ELEMENTS - SWIMMING
+    const swimForm = document.getElementById('swimming-form');
+    const swimDateInput = document.getElementById('swim-date');
+    const swimPeopleInput = document.getElementById('swim-people');
+    const swimSlots = {
+        morning: document.getElementById('swim-morning-slots'),
+        afternoon: document.getElementById('swim-afternoon-slots'),
+        evening: document.getElementById('swim-evening-slots')
+    };
+
+    // SHARED MODALS
+    const confirmModal = document.getElementById('confirm-modal');
+    const qrModal = document.getElementById('qr-modal');
+    const ticketModal = document.getElementById('ticket-modal');
+
+    // VIEW SWITCHER
+    window.showView = (viewName) => {
+        Object.values(views).forEach(v => v.classList.remove('active'));
+        views[viewName].classList.add('active');
+        currentService = viewName;
+        if (viewName === 'turf' || viewName === 'swimming') {
+            initBookingPage();
+        }
+    };
+
+    window.closeModal = (id) => {
+        document.getElementById(id).classList.remove('active');
+    };
+
+    // INITIALIZE DATE
     const today = new Date().toISOString().split('T')[0];
-    ['t-date', 's-date'].forEach(id => {
-        const el = document.getElementById(id);
-        el.value = today;
-        el.min = today;
+    [turfDateInput, swimDateInput].forEach(inp => {
+        inp.value = today;
+        inp.min = today;
     });
-}
 
-function renderAllSlots() {
-    renderTurfSlots();
-    renderSwimmingSlots();
-}
+    // SLOT DATA
+    const turfSlotData = [
+        { time: '11:30 AM - 12:30 PM', cat: 'morning' },
+        { time: '12:00 PM - 01:00 PM', cat: 'afternoon' }, { time: '01:00 PM - 02:00 PM', cat: 'afternoon' },
+        { time: '02:00 PM - 03:00 PM', cat: 'afternoon' }, { time: '03:00 PM - 04:00 PM', cat: 'afternoon' },
+        { time: '04:00 PM - 05:00 PM', cat: 'afternoon' }, { time: '05:00 PM - 06:00 PM', cat: 'evening' },
+        { time: '06:00 PM - 07:00 PM', cat: 'evening' }, { time: '07:00 PM - 08:00 PM', cat: 'evening' },
+        { time: '08:00 PM - 09:00 PM', cat: 'evening' }, { time: '09:00 PM - 10:00 PM', cat: 'night' },
+        { time: '10:00 PM - 11:00 PM', cat: 'night' }, { time: '11:00 PM - 12:00 AM', cat: 'night' }
+    ];
 
-function renderTurfSlots() {
-    const container = document.getElementById('t-slots-grid-container');
-    container.innerHTML = '<div class="slots-grid"></div>';
-    const grid = container.querySelector('.slots-grid');
-    const date = document.getElementById('t-date').value;
-    const bookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-    
-    turfSlots.forEach(slot => {
-        const isBooked = bookings.some(b => b.date === date && b.time === slot.time && b.type === 'turf' && b.status !== 'cancelled');
-        const btn = document.createElement('button');
-        btn.className = `slot-btn ${isBooked ? 'booked' : ''} ${selectedSlot === slot.time ? 'selected' : ''}`;
-        btn.innerHTML = `<span>${slot.time}</span><strong>₹${slot.basePrice}</strong>`;
-        btn.onclick = () => {
-            if (isBooked) return;
-            selectedSlot = slot.time;
-            selectedPrice = `₹${slot.basePrice}`;
-            currentType = 'turf';
-            updateTurfBtn();
-            renderTurfSlots();
-        };
-        grid.appendChild(btn);
-    });
-}
+    const swimSlotData = [
+        { time: '07:00 AM - 08:00 AM', cat: 'morning' }, { time: '08:00 AM - 09:00 AM', cat: 'morning' },
+        { time: '09:00 AM - 10:00 AM', cat: 'morning' }, { time: '10:00 AM - 11:00 AM', cat: 'morning' },
+        { time: '03:00 PM - 04:00 PM', cat: 'afternoon' }, { time: '04:00 PM - 05:00 PM', cat: 'afternoon' },
+        { time: '05:00 PM - 06:00 PM', cat: 'evening' }, { time: '06:00 PM - 07:00 PM', cat: 'evening' },
+        { time: '07:00 PM - 08:00 PM', cat: 'evening' }, { time: '08:00 PM - 09:00 PM', cat: 'evening' }
+    ];
 
-function renderSwimmingSlots() {
-    const container = document.getElementById('s-slots-grid-container');
-    container.innerHTML = '<div class="slots-grid"></div>';
-    const grid = container.querySelector('.slots-grid');
-    const date = document.getElementById('s-date').value;
-    const bookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-    
-    swimSlots.forEach(slot => {
-        const isBooked = bookings.some(b => b.date === date && b.time === slot.time && b.type === 'swimming' && b.status !== 'cancelled');
-        const btn = document.createElement('button');
-        btn.className = `slot-btn ${isBooked ? 'booked' : ''} ${selectedSlot === slot.time ? 'selected' : ''}`;
-        btn.innerHTML = `<span>${slot.time}</span><strong>₹100/p</strong>`;
-        btn.onclick = () => {
-            if (isBooked) return;
-            selectedSlot = slot.time;
-            currentType = 'swimming';
-            updateSwimBtn();
-            renderSwimmingSlots();
-        };
-        grid.appendChild(btn);
-    });
-}
+    function initBookingPage() {
+        const date = currentService === 'turf' ? turfDateInput.value : swimDateInput.value;
+        const slots = currentService === 'turf' ? turfSlotData : swimSlotData;
+        const containers = currentService === 'turf' ? turfSlots : swimSlots;
+        const booked = currentBookings.filter(b => b.date === date && b.type === currentService && b.status !== 'cancelled').map(b => b.time);
 
-function updateTurfBtn() {
-    document.getElementById('t-book-btn').disabled = !selectedSlot;
-}
+        // Clear
+        Object.values(containers).forEach(c => c.innerHTML = '');
 
-function updateSwimBtn() {
-    document.getElementById('s-book-btn').disabled = !selectedSlot;
-}
-
-function setupEventListeners() {
-    document.getElementById('turf-form').onsubmit = (e) => {
-        e.preventDefault();
-        openConfirmModal();
-    };
-    document.getElementById('s-form').onsubmit = (e) => {
-        e.preventDefault();
-        openConfirmModal();
-    };
-    document.getElementById('t-date').onchange = renderTurfSlots;
-    document.getElementById('s-date').onchange = renderSwimmingSlots;
-    document.getElementById('s-people').oninput = updateSwimBtn;
-
-    document.getElementById('utr-input').oninput = (e) => {
-        document.getElementById('verify-payment').disabled = e.target.value.length !== 12;
-    };
-
-    document.getElementById('go-to-payment').onclick = openQrModal;
-    document.getElementById('verify-payment').onclick = () => finalizeBooking(document.getElementById('utr-input').value);
-    document.getElementById('pay-at-venue').onclick = () => finalizeBooking('Pay at Venue');
-}
-
-function openConfirmModal() {
-    const details = document.getElementById('modal-details');
-    if (currentType === 'turf') {
-        details.innerHTML = `
-            <p><strong>Service:</strong> Turf</p>
-            <p><strong>Name:</strong> ${document.getElementById('t-name').value}</p>
-            <p><strong>Time:</strong> ${selectedSlot}</p>
-            <p><strong>Price:</strong> ${selectedPrice}</p>
-        `;
-    } else {
-        const people = document.getElementById('s-people').value;
-        selectedPrice = `₹${people * 100}`;
-        details.innerHTML = `
-            <p><strong>Service:</strong> Swimming</p>
-            <p><strong>Name:</strong> ${document.getElementById('s-name').value}</p>
-            <p><strong>People:</strong> ${people}</p>
-            <p><strong>Time:</strong> ${selectedSlot}</p>
-            <p><strong>Total:</strong> ${selectedPrice}</p>
-        `;
+        slots.forEach(slot => {
+            const isBooked = booked.includes(slot.time);
+            const btn = document.createElement('button');
+            btn.className = `slot-btn ${isBooked ? 'booked' : ''}`;
+            if (isBooked) btn.disabled = true;
+            
+            const price = currentService === 'turf' ? getTurfPrice(slot.time) : '₹100/p';
+            btn.innerHTML = `<span class="slot-time">${slot.time}</span><span class="slot-price">${isBooked ? 'Full' : price}</span>`;
+            
+            if (!isBooked) {
+                btn.onclick = () => {
+                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedSlot = { time: slot.time, price: price };
+                    updateButtonStates();
+                };
+            }
+            containers[slot.cat].appendChild(btn);
+        });
+        updateButtonStates();
     }
-    document.getElementById('confirm-modal').classList.add('active');
-}
 
-function openQrModal() {
-    document.getElementById('confirm-modal').classList.remove('active');
-    document.getElementById('qr-price').textContent = selectedPrice;
-    const amount = selectedPrice.replace(/\D/g,'');
-    const upi = `upi://pay?pa=dummy@upi&pn=K6%20Turf&am=${amount}&cu=INR`;
-    document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upi)}`;
-    document.getElementById('qr-modal').classList.add('active');
-}
+    function getTurfPrice(time) {
+        if (time.includes('04:30')) return '₹600';
+        if (time.includes('05:') || time.includes('06:') || time.includes('07:') || time.includes('08:') || time.includes('09:') || time.includes('10:') || time.includes('11:')) return '₹700';
+        return '₹500';
+    }
 
-function finalizeBooking(utr) {
-    const id = `${currentType === 'turf' ? 'TURF' : 'SWIM'}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-    const booking = {
-        id, type: currentType,
-        name: document.getElementById(`${currentType === 'turf' ? 't' : 's'}-name`).value,
-        whatsapp: document.getElementById(`${currentType === 'turf' ? 't' : 's'}-whatsapp`).value,
-        date: document.getElementById(`${currentType === 'turf' ? 't' : 's'}-date`).value,
-        time: selectedSlot,
-        price: selectedPrice,
-        utr: utr,
-        timestamp: new Date().toISOString()
+    function updateButtonStates() {
+        const btn = currentService === 'turf' ? document.getElementById('turf-book-btn-desktop') : document.getElementById('swim-book-btn-desktop');
+        btn.disabled = !selectedSlot;
+    }
+
+    // FORM SUBMISSIONS
+    [turfForm, swimForm].forEach(f => {
+        f.onsubmit = (e) => {
+            e.preventDefault();
+            if (!selectedSlot) return;
+            
+            const name = currentService === 'turf' ? document.getElementById('turf-name').value : document.getElementById('swim-name').value;
+            const phone = currentService === 'turf' ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value;
+            const extra = currentService === 'swimming' ? `<div class="confirm-row"><i class="ph-fill ph-users"></i><span><strong>People:</strong> ${swimPeopleInput.value}</span></div>` : '';
+            const priceVal = currentService === 'turf' ? selectedSlot.price : `₹${parseInt(swimPeopleInput.value) * 100}`;
+
+            document.getElementById('confirm-details').innerHTML = `
+                <div class="confirm-row"><i class="ph-fill ph-user"></i><span><strong>Name:</strong> ${name}</span></div>
+                ${extra}
+                <div class="confirm-row"><i class="ph-fill ph-calendar"></i><span><strong>Date:</strong> ${currentService === 'turf' ? turfDateInput.value : swimDateInput.value}</span></div>
+                <div class="confirm-row"><i class="ph-fill ph-clock"></i><span><strong>Time:</strong> ${selectedSlot.time}</span></div>
+                <div class="confirm-row"><i class="ph-fill ph-tag"></i><span><strong>Total:</strong> <strong class="price-highlight">${priceVal}</strong></span></div>
+            `;
+            confirmModal.dataset.finalPrice = priceVal;
+            confirmModal.classList.add('active');
+        };
+    });
+
+    document.getElementById('final-confirm-btn').onclick = () => {
+        confirmModal.classList.remove('active');
+        const price = confirmModal.dataset.finalPrice;
+        document.getElementById('qr-price').textContent = price;
+        const cleanPrice = price.replace(/[^0-9]/g, '');
+        const upi = `upi://pay?pa=dummy@upi&pn=K6%20Turf&am=${cleanPrice}&cu=INR`;
+        document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upi)}`;
+        qrModal.classList.add('active');
     };
-    
-    const bookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-    bookings.push(booking);
-    localStorage.setItem('turf_bookings', JSON.stringify(bookings));
-    
-    document.getElementById('qr-modal').classList.remove('active');
-    document.getElementById('final-booking-id').textContent = id;
-    document.getElementById('success-modal').classList.add('active');
-}
 
-function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
-}
+    // PAYMENT VERIFICATION
+    const utrInput = document.getElementById('utr-input');
+    const verifyBtn = document.getElementById('verify-btn');
+    utrInput.oninput = () => verifyBtn.disabled = utrInput.value.length !== 12;
+
+    const finalizeBooking = (utr) => {
+        const id = `${currentService.toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const newBooking = {
+            id, type: currentService, utr,
+            name: currentService === 'turf' ? document.getElementById('turf-name').value : document.getElementById('swim-name').value,
+            whatsapp: currentService === 'turf' ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value,
+            date: currentService === 'turf' ? turfDateInput.value : swimDateInput.value,
+            time: selectedSlot.time,
+            price: confirmModal.dataset.finalPrice,
+            timestamp: new Date().toISOString()
+        };
+        currentBookings.push(newBooking);
+        localStorage.setItem('turf_bookings', JSON.stringify(currentBookings));
+        qrModal.classList.remove('active');
+        document.getElementById('final-id').textContent = id;
+        ticketModal.classList.add('active');
+    };
+
+    verifyBtn.onclick = () => finalizeBooking(utrInput.value);
+    document.getElementById('venue-btn').onclick = () => finalizeBooking('Pay at Venue');
+
+    // RE-INIT ON DATE CHANGE
+    [turfDateInput, swimDateInput].forEach(inp => {
+        inp.onchange = () => {
+            selectedSlot = null;
+            initBookingPage();
+        };
+    });
+});

@@ -199,6 +199,14 @@
 
         <div class="filters-container" style="background:var(--surface); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:1.5rem; display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;">
             <div>
+                <label style="display:block; font-size:0.75rem; color:var(--text-muted); font-weight:600; margin-bottom:0.25rem;">Category</label>
+                <select id="type-filter" style="padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit;">
+                    <option value="all">All Services</option>
+                    <option value="turf">Turf Only</option>
+                    <option value="swimming">Swimming Only</option>
+                </select>
+            </div>
+            <div>
                 <label style="display:block; font-size:0.75rem; color:var(--text-muted); font-weight:600; margin-bottom:0.25rem;">From Date</label>
                 <input type="date" id="filter-from" style="padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius-sm); font-family:inherit;">
             </div>

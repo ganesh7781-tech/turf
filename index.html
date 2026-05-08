@@ -12,239 +12,299 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* SPA View Switching */
-        .view-section {
-            display: none;
-            min-height: 100vh;
-        }
-        .view-section.active {
-            display: block;
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Landing Page Improvements */
+        /* Landing Page Styles */
         .landing-container {
-            padding: 1.5rem;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 2rem;
+            gap: 2rem;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
         }
+        .landing-header { text-align: center; margin-bottom: 1rem; }
+        .landing-header h1 { font-size: 2.5rem; color: var(--text-main); margin-bottom: 0.5rem; }
+        .landing-header p { color: var(--text-muted); font-size: 1.1rem; }
         .choice-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
         }
         .choice-card {
-            background: white;
-            border-radius: 20px;
+            background: var(--surface);
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            text-decoration: none;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
             cursor: pointer;
-            transition: 0.3s;
         }
-        .choice-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(16, 185, 129, 0.15); }
-        .card-img { width: 100%; height: 150px; object-fit: cover; }
-        .card-body { padding: 1.25rem; text-align: center; }
-        .card-icon { 
-            width: 50px; height: 50px; background: #ecfdf5; color: #10b981;
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            margin: -40px auto 10px; border: 3px solid white; font-size: 1.5rem;
+        .card-image { width: 100%; height: 180px; overflow: hidden; }
+        .card-image img { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
+        .choice-card:hover .card-image img { transform: scale(1.1); }
+        .choice-content {
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
         }
-        .card-btn {
-            background: var(--primary); color: white; border: none; padding: 0.6rem 1.5rem;
-            border-radius: 50px; font-weight: 600; width: 100%; margin-top: 10px; cursor: pointer;
+        .choice-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px -15px rgba(16, 185, 129, 0.2);
+        }
+        .choice-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            background: var(--primary-light);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            margin-top: -3rem;
+            border: 4px solid white;
+            transition: var(--transition);
+        }
+        .choice-card:hover .choice-icon { background: var(--primary); color: white; transform: rotate(-10deg); }
+        .choice-btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            margin: 0 1.5rem 1.5rem 1.5rem;
+            text-align: center;
         }
 
-        /* Back Button */
+        /* SPA Navigation Styles */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        
         .back-btn {
-            position: fixed; top: 1rem; left: 1rem; z-index: 100;
-            background: white; border: none; width: 40px; height: 40px;
-            border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--text-main);
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            z-index: 10;
+            backdrop-filter: blur(4px);
         }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
 
-        /* Mobile specific tweaks */
-        @media (max-width: 600px) {
-            .landing-header h1 { font-size: 1.75rem; }
-            .choice-grid { grid-template-columns: 1fr; }
-            .main-layout { flex-direction: column; }
-            .booking-sidebar { position: static; width: 100%; }
-        }
+        /* Custom Theme Overrides for Swimming */
+        .swimming-theme .app-header { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+        .swimming-theme .btn-primary { background: #0ea5e9; }
+        .swimming-theme .btn-primary:hover { background: #0284c7; }
+        .swimming-theme .date-display { background: #e0f2fe; color: #0369a1; }
+        .swimming-theme .price-highlight { color: #0ea5e9; }
     </style>
 </head>
-<body>
+<body class="turf-theme"> <!-- Default theme -->
 
-    <!-- Landing View -->
-    <section id="view-landing" class="view-section active">
+    <!-- 1. LANDING VIEW -->
+    <div id="landing-view" class="view-section active">
         <div class="landing-container">
-            <div class="landing-header" style="text-align: center; margin-bottom: 2rem;">
-                <img src="k6 logo.png" alt="Logo" style="width: 120px; border-radius: 50%; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: black;">
-                <h1 style="margin-top: 1rem;">Welcome to K6 Turf</h1>
-                <p style="color: #666;">Choose a service to continue</p>
+            <div class="landing-header">
+                <img src="k6 logo.png" alt="K6 Logo" style="width: 150px; height: 150px; border-radius: 50%; border: 5px solid white; box-shadow: var(--shadow-xl); margin-bottom: 2rem; background: black;">
+                <h1>Welcome to K6 Turf</h1>
+                <p>Select a service to proceed with your booking</p>
             </div>
 
             <div class="choice-grid">
                 <div class="choice-card" onclick="showView('turf')">
-                    <img src="turf_preview.png" class="card-img" alt="Turf">
-                    <div class="card-body">
-                        <div class="card-icon"><i class="ph-fill ph-baseball"></i></div>
-                        <h3>Book Turf</h3>
-                        <p style="font-size: 0.85rem; color: #777;">Pro football & cricket turf</p>
-                        <button class="card-btn">Open Turf</button>
+                    <div class="card-image">
+                        <img src="turf_preview.png" alt="Football Turf">
                     </div>
+                    <div class="choice-content">
+                        <div class="choice-icon">
+                            <i class="ph-fill ph-baseball"></i>
+                        </div>
+                        <h2>Book Turf</h2>
+                        <p>Premium football & cricket turf with pro lighting.</p>
+                    </div>
+                    <div class="choice-btn">Go to Turf</div>
                 </div>
 
                 <div class="choice-card" onclick="showView('swimming')">
-                    <img src="swimming_preview.png" class="card-img" alt="Swimming">
-                    <div class="card-body">
-                        <div class="card-icon" style="color: #0ea5e9; background: #f0f9ff;"><i class="ph-fill ph-waves"></i></div>
-                        <h3>Book Swimming</h3>
-                        <p style="font-size: 0.85rem; color: #777;">Crystal clear premium pool</p>
-                        <button class="card-btn" style="background: #0ea5e9;">Open Pool</button>
+                    <div class="card-image">
+                        <img src="swimming_preview.png" alt="Swimming Pool">
                     </div>
+                    <div class="choice-content">
+                        <div class="choice-icon" style="color: #0ea5e9; background: #f0f9ff;">
+                            <i class="ph-fill ph-waves"></i>
+                        </div>
+                        <h2>Book Swimming</h2>
+                        <p>Crystal clear pool for the perfect dive.</p>
+                    </div>
+                    <div class="choice-btn" style="background: #0ea5e9;">Go to Pool</div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Turf View -->
-    <section id="view-turf" class="view-section">
-        <button class="back-btn" onclick="showView('landing')"><i class="ph ph-arrow-left"></i></button>
+    <!-- 2. TURF BOOKING VIEW -->
+    <div id="turf-view" class="view-section">
+        <button class="back-btn" onclick="showView('landing')"><i class="ph ph-arrow-left"></i> Back</button>
         <div class="app-container">
             <header class="app-header">
                 <div class="logo-container">
-                    <img src="k6 logo.png" alt="Logo" style="width: 50px; border-radius: 50%; border: 2px solid white; background: black;">
+                    <img src="k6 logo.png" alt="K6 Logo" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid white; box-shadow: var(--shadow-md); background: black;">
                     <h1>K6 Turf</h1>
                 </div>
+                <p>Select your preferred time and book instantly.</p>
             </header>
+
             <main class="main-layout">
                 <aside class="booking-sidebar">
                     <div class="card form-card">
+                        <h2 class="desktop-only">Book Your Slot</h2>
                         <form id="turf-form" class="booking-form">
                             <div class="form-group">
                                 <label>Full Name</label>
-                                <div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="t-name" placeholder="Your Name" required></div>
+                                <div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="turf-name" placeholder="Enter your full name" required></div>
                             </div>
                             <div class="form-group">
-                                <label>WhatsApp</label>
-                                <div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="t-whatsapp" placeholder="WhatsApp No" required></div>
+                                <label>WhatsApp Number</label>
+                                <div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="turf-whatsapp" placeholder="Enter WhatsApp number" required></div>
                             </div>
                             <div class="form-group">
-                                <label>Duration</label>
-                                <div class="input-wrapper"><i class="ph ph-hourglass"></i><select id="t-duration"><option value="1">1 Hour</option><option value="1.5">1.5 Hours</option><option value="2">2 Hours</option></select></div>
+                                <label>Playing Time</label>
+                                <div class="input-wrapper">
+                                    <i class="ph ph-hourglass"></i>
+                                    <select id="turf-duration" required>
+                                        <option value="1">1 Hour</option>
+                                        <option value="1.5">1.5 Hours</option>
+                                        <option value="2">2 Hours</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label>Date</label>
-                                <div class="input-wrapper"><i class="ph ph-calendar"></i><input type="date" id="t-date" required></div>
+                                <label>Select Date</label>
+                                <div class="input-wrapper"><i class="ph ph-calendar-blank"></i><input type="date" id="turf-date" required></div>
                             </div>
-                            <button type="submit" class="btn-primary" id="t-book-btn" disabled>Review & Book</button>
+                            <div class="desktop-action">
+                                <button type="submit" class="btn-primary" id="turf-book-btn-desktop" disabled>Review & Book</button>
+                            </div>
                         </form>
                     </div>
                 </aside>
+
                 <section class="slots-container">
                     <div class="card slots-card">
                         <div class="slots-header">
-                            <h2 id="t-display-date">Today</h2>
+                            <h2><i class="ph-fill ph-calendar-check" style="color:var(--primary);"></i> Select Slot</h2>
+                            <div class="date-display" id="turf-display-date">Today</div>
                         </div>
-                        <div id="t-slots-grid-container">
-                            <!-- Slots will be injected here -->
-                        </div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun-horizon"></i> Morning</h3><div class="slots-grid" id="turf-morning-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun"></i> Afternoon</h3><div class="slots-grid" id="turf-afternoon-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-cloud-moon"></i> Evening</h3><div class="slots-grid" id="turf-evening-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-moon"></i> Night</h3><div class="slots-grid" id="turf-night-slots"></div></div>
                     </div>
                 </section>
             </main>
         </div>
-    </section>
+    </div>
 
-    <!-- Swimming View -->
-    <section id="view-swimming" class="view-section">
-        <button class="back-btn" onclick="showView('landing')"><i class="ph ph-arrow-left"></i></button>
-        <div class="app-container" style="background: #f0f9ff;">
-            <header class="app-header" style="background: #0ea5e9;">
+    <!-- 3. SWIMMING BOOKING VIEW -->
+    <div id="swimming-view" class="view-section swimming-theme">
+        <button class="back-btn" onclick="showView('landing')"><i class="ph ph-arrow-left"></i> Back</button>
+        <div class="app-container">
+            <header class="app-header">
                 <div class="logo-container">
-                    <img src="k6 logo.png" alt="Logo" style="width: 50px; border-radius: 50%; border: 2px solid white; background: black;">
+                    <img src="k6 logo.png" alt="K6 Logo" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid white; box-shadow: var(--shadow-md); background: black;">
                     <h1>K6 Swimming</h1>
                 </div>
+                <p>Dive into refreshment. Book your pool slot now.</p>
             </header>
+
             <main class="main-layout">
                 <aside class="booking-sidebar">
                     <div class="card form-card">
-                        <form id="s-form" class="booking-form">
-                            <div class="form-group">
-                                <label>Full Name</label>
-                                <div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="s-name" placeholder="Your Name" required></div>
+                        <h2 class="desktop-only">Pool Booking</h2>
+                        <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 0.75rem; border-radius: 12px; margin-bottom: 1rem; font-size: 0.85rem; color: #0369a1;">
+                            <i class="ph-fill ph-info"></i> ₹100 per person
+                        </div>
+                        <form id="swimming-form" class="booking-form">
+                            <div class="form-group"><label>Full Name</label><div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="swim-name" placeholder="Full name" required></div></div>
+                            <div class="form-group"><label>WhatsApp</label><div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="swim-whatsapp" placeholder="WhatsApp" required></div></div>
+                            <div class="form-group"><label>People Count</label><div class="input-wrapper"><i class="ph ph-users"></i><input type="number" id="swim-people" value="1" min="1" required></div></div>
+                            <div class="form-group"><label>Select Date</label><div class="input-wrapper"><i class="ph ph-calendar-blank"></i><input type="date" id="swim-date" required></div></div>
+                            <div class="desktop-action">
+                                <button type="submit" class="btn-primary" id="swim-book-btn-desktop" disabled>Review & Book</button>
                             </div>
-                            <div class="form-group">
-                                <label>WhatsApp</label>
-                                <div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="s-whatsapp" placeholder="WhatsApp No" required></div>
-                            </div>
-                            <div class="form-group">
-                                <label>People</label>
-                                <div class="input-wrapper"><i class="ph ph-users"></i><input type="number" id="s-people" value="1" min="1" required></div>
-                            </div>
-                            <div class="form-group">
-                                <label>Date</label>
-                                <div class="input-wrapper"><i class="ph ph-calendar"></i><input type="date" id="s-date" required></div>
-                            </div>
-                            <button type="submit" class="btn-primary" id="s-book-btn" disabled style="background: #0ea5e9;">Review & Book</button>
                         </form>
                     </div>
                 </aside>
+
                 <section class="slots-container">
                     <div class="card slots-card">
                         <div class="slots-header">
-                            <h2 id="s-display-date">Today</h2>
+                            <h2><i class="ph-fill ph-waves" style="color:#0ea5e9;"></i> Sessions</h2>
+                            <div class="date-display" id="swim-display-date">Today</div>
                         </div>
-                        <div id="s-slots-grid-container">
-                            <!-- Slots will be injected here -->
-                        </div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun-horizon"></i> Morning</h3><div class="slots-grid" id="swim-morning-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-sun"></i> Afternoon</h3><div class="slots-grid" id="swim-afternoon-slots"></div></div>
+                        <div class="slot-section"><h3 class="section-title"><i class="ph ph-cloud-moon"></i> Evening</h3><div class="slots-grid" id="swim-evening-slots"></div></div>
                     </div>
                 </section>
             </main>
         </div>
-    </section>
+    </div>
 
-    <!-- Shared Modals (Turf & Swimming) -->
+    <!-- SHARED MODALS -->
     <div class="modal-overlay" id="confirm-modal">
         <div class="modal confirm-modal">
-            <h2 id="modal-title">Confirm Booking</h2>
-            <div class="confirm-details-card" id="modal-details">
+            <h2 class="modal-title">Confirm Booking</h2>
+            <div class="confirm-details-card" id="confirm-details">
                 <!-- Details injected via JS -->
             </div>
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal('confirm-modal')">Cancel</button>
-                <button class="btn-confirm" id="go-to-payment">Confirm & Pay</button>
+                <button class="btn-confirm" id="final-confirm-btn">Confirm & Pay</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="qr-modal">
         <div class="modal qr-modal-content">
-            <h2>Pay via UPI</h2>
-            <p>Scan to pay <strong id="qr-price" class="price-highlight">₹0</strong></p>
+            <h2 class="modal-title">Pay via UPI</h2>
+            <p>Pay <strong id="qr-price" class="price-highlight">₹0</strong></p>
             <div class="qr-container"><img id="qr-image" src="" alt="QR"></div>
-            <input type="text" id="utr-input" placeholder="Enter 12-digit UTR" maxlength="12" style="width:100%; padding:0.75rem; border:1px solid #ddd; border-radius:8px; margin-top:1rem;">
-            <div class="modal-actions" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem;">
-                <button class="btn-confirm" id="verify-payment" disabled style="width:100%">Verify Payment</button>
-                <button class="btn-secondary" id="pay-at-venue" style="width:100%">Pay at Venue</button>
+            <div class="utr-section">
+                <label>Enter 12-digit UTR No.</label>
+                <div class="input-wrapper"><i class="ph ph-receipt"></i><input type="text" id="utr-input" placeholder="UTR Number" maxlength="12"></div>
+            </div>
+            <div class="modal-actions" style="display:flex; flex-direction:column; gap:0.5rem;">
+                <button class="btn-confirm" id="verify-btn" disabled style="width:100%">Verify Payment</button>
+                <button class="btn-secondary" id="venue-btn" style="width:100%">Pay at Venue</button>
                 <button class="btn-cancel" onclick="closeModal('qr-modal')" style="width:100%">Back</button>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="success-modal">
+    <div class="modal-overlay" id="ticket-modal">
         <div class="modal ticket-modal">
-            <i class="ph-fill ph-check-circle" style="font-size:4rem; color:#10b981;"></i>
-            <h2>Booking Successful!</h2>
-            <div class="booking-id-box">ID: <strong id="final-booking-id">--</strong></div>
+            <div class="modal-icon success-icon"><i class="ph-fill ph-check-circle"></i></div>
+            <h2 class="modal-title">Successful!</h2>
+            <div class="booking-id-box"><span class="booking-id-label">BOOKING ID</span><strong id="final-id">--</strong></div>
             <button class="btn-confirm" onclick="location.reload()">Done</button>
         </div>
     </div>

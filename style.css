@@ -24,32 +24,6 @@
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.view-section {
-    display: none;
-    min-height: 100vh;
-}
-.view-section.active {
-    display: block;
-}
-
-.back-btn {
-    position: absolute;
-    top: 1.5rem;
-    left: 1.5rem;
-    background: white;
-    border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    box-shadow: var(--shadow-md);
-    cursor: pointer;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-main);
-}
-
 * {
     margin: 0;
     padding: 0;
@@ -611,10 +585,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         width: 50px;
         height: 50px;
         font-size: 1.5rem;
-    }
-    
-    .view-section {
-        min-height: calc(100vh - 60px);
     }
 }
 
