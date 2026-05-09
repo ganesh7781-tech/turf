@@ -81,6 +81,7 @@
         .badge-cash { background: #fef3c7; color: #92400e; }
         .badge-ok { background: #dcfce7; color: #166534; }
         .badge-cancel { background: #fee2e2; color: #b91c1c; }
+        .badge-pending { background: #ffedd5; color: #9a3412; }
 
         /* MODAL */
         .modal-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 9999; }
@@ -147,12 +148,24 @@
         <div id="list-tab" class="content active">
             <div class="stats-row">
                 <div class="card stat-card">
-                    <div class="stat-icon"><i class="ph-fill ph-users"></i></div>
-                    <div><div class="stat-label">Total Customers</div><div id="stat-c" class="stat-value">0</div></div>
+                    <div class="stat-icon"><i class="ph-fill ph-calendar"></i></div>
+                    <div><div class="stat-label">Total Bookings</div><div id="stat-c" class="stat-value">0</div></div>
                 </div>
                 <div class="card stat-card">
-                    <div class="stat-icon"><i class="ph-fill ph-money"></i></div>
-                    <div><div class="stat-label">Total Revenue</div><div id="stat-r" class="stat-value">₹0</div></div>
+                    <div class="stat-icon" style="background:#fef3c7; color:#d97706;"><i class="ph-fill ph-trend-up"></i></div>
+                    <div><div class="stat-label">Today's Revenue</div><div id="stat-r-today" class="stat-value">₹0</div></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background:#dcfce7; color:#166534;"><i class="ph-fill ph-check-circle"></i></div>
+                    <div><div class="stat-label">Empty Slots</div><div id="stat-empty" class="stat-value">0</div></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background:#fee2e2; color:#991b1b;"><i class="ph-fill ph-clock-countdown"></i></div>
+                    <div><div class="stat-label">Booked Slots</div><div id="stat-booked" class="stat-value">0</div></div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon" style="background:#e0f2fe; color:#0369a1;"><i class="ph-fill ph-wallet"></i></div>
+                    <div><div class="stat-label">Pending Pay</div><div id="stat-pending" class="stat-value">₹0</div></div>
                 </div>
             </div>
 
@@ -166,7 +179,7 @@
             </div>
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>ID</th><th>Service</th><th>Customer</th><th>WhatsApp</th><th>Date</th><th>Slot</th><th>Price</th><th>Pay</th><th>Status</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Source</th><th>Customer</th><th>WhatsApp</th><th>Date</th><th>Slot</th><th>Price</th><th>Pay</th><th>Status</th><th>Actions</th></tr></thead>
                     <tbody id="btable"></tbody>
                 </table>
             </div>
@@ -184,9 +197,26 @@
             <div class="card">
                 <div style="display:flex; justify-content: space-between; border-bottom:1px solid #f1f5f9; padding-bottom:15px; margin-bottom:20px;">
                     <div style="display:flex; align-items:center; gap:10px;"><i class="ph ph-clock" style="color:var(--primary); font-size:20px;"></i><h4 id="stitle" style="margin:0; font-size:18px;">Daily Schedule</h4></div>
-                    <span id="sdisplay" style="color:var(--primary); font-weight:700; font-size:16px;"></span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button class="btn btn-s" onclick="manageSlots()" title="Manage Slot Timings"><i class="ph ph-gear"></i> Manage Slots</button>
+                        <span id="sdisplay" style="color:var(--primary); font-weight:700; font-size:16px;"></span>
+                    </div>
                 </div>
                 <div id="sgrid" class="grid"></div>
+            </div>
+        </div>
+        <div class="card" style="margin-top: 40px; background: #f1f5f9; border: none; padding: 15px 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="ph ph-database" style="color: var(--primary); font-size: 20px;"></i>
+                    <span style="font-weight: 600; color: var(--text); font-size: 14px;">Firebase System Status:</span>
+                    <span class="badge" style="background: #dcfce7; color: #166534;">Online</span>
+                </div>
+                <div style="display: flex; gap: 24px; font-size: 13px; color: var(--muted);">
+                    <div><strong style="color: var(--text);">Total Records:</strong> <span id="db-total-records">0</span></div>
+                    <div><strong style="color: var(--text);">Tier:</strong> Spark (Free)</div>
+                    <div><strong style="color: var(--text);">Limit:</strong> 50k Reads / Day</div>
+                </div>
             </div>
         </div>
     </div>
@@ -207,7 +237,7 @@
                 <div class="form-g"><label>Customer Name</label><input type="text" id="mname" required placeholder="Full Name"></div>
                 <div class="form-g"><label>WhatsApp Number</label><input type="tel" id="mphone" required placeholder="98765 43210"></div>
                 <div style="display:flex; gap:12px;" id="mdur-g">
-                    <div class="form-g" style="flex:1;"><label>Duration</label><select id="mdur"><option value="1">1 Hour</option><option value="1.5">1.5 Hours</option><option value="2">2 Hours</option></select></div>
+                    <div class="form-g" style="flex:1;"><label>Duration</label><select id="mdur"><option value="1">1 Hour</option><option value="1.5">1.5 Hours</option><option value="2">2 Hours</option><option value="full">Full Day</option></select></div>
                     <div class="form-g" style="flex:1;"><label>Payment</label><select id="mpay"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Pending">Pending</option></select></div>
                 </div>
                 <div id="mcount-g" class="form-g" style="display:none;"><label>Number of Persons</label><input type="number" id="mcount" value="1" min="1" max="50"></div>
@@ -220,221 +250,23 @@
         </div>
     </div>
 
-    <script>
-        window.onerror = function(m, u, l) { alert("Admin Pro Error: " + m); return false; };
-
-        const TSLOTS = ['11:30 AM - 12:30 PM', '12:00 PM - 01:00 PM', '01:00 PM - 02:00 PM', '02:00 PM - 03:00 PM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM', '09:00 PM - 10:00 PM', '10:00 PM - 11:00 PM', '11:00 PM - 12:00 AM'];
-        const SSLOTS = ['07:00 AM - 08:00 AM', '08:00 AM - 09:00 AM', '09:00 AM - 10:00 AM', '10:00 AM - 11:00 AM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM'];
-        let bp = 700;
-
-        function doLogin() {
-            if (document.getElementById('pw').value === 'k6admin') {
-                sessionStorage.setItem('k6_auth', 'true');
-                document.getElementById('login').style.display = 'none';
-                document.getElementById('main').style.display = 'block';
-                showList();
-            } else alert("Invalid Password");
-        }
-
-        function setTab(id) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tb-' + id).classList.add('active');
-            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            document.getElementById(id + '-tab').classList.add('active');
-            if (id === 'sch') {
-                if(!document.getElementById('sdate').value) document.getElementById('sdate').value = new Date().toISOString().split('T')[0];
-                showSch();
-            } else showList();
-        }
-
-        function showList() {
-            const data = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-            data.sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0));
-            const body = document.getElementById('btable');
-            body.innerHTML = '';
-            let rev = 0;
-            data.forEach(b => {
-                if(b.status !== 'cancelled') rev += parseInt((b.price||'0').replace(/[^0-9]/g, '')) || 0;
-                const tr = document.createElement('tr');
-                const bType = b.type || 'turf';
-                const bc = b.status === 'cancelled' ? 'badge-cancel' : 'badge-ok';
-                const pc = b.payMode === 'UPI' ? 'badge-upi' : (b.payMode==='Cash'?'badge-cash':'');
-                tr.innerHTML = `<td><small>#${b.id.slice(-5)}</small></td><td><span style="font-weight:700; color:${bType==='swimming'?'#0ea5e9':'#10b981'}">${bType.toUpperCase()}</span></td><td><b>${b.name}</b></td><td>${b.whatsapp}</td><td>${b.date}</td><td>${b.time}</td><td>${b.price}</td><td><span class="badge ${pc}">${b.payMode||'?'}${b.count?` (${b.count}p)`:''}</span></td><td><span class="badge ${bc}">${b.status||'confirmed'}</span></td><td><div style="display:flex; gap:5px;"><button class="btn btn-s" style="padding:6px;" onclick="editB('${b.id}')"><i class="ph ph-pencil"></i></button><button class="btn-d" onclick="cancelB('${b.id}')"><i class="ph ph-trash"></i></button></div></td>`;
-                body.appendChild(tr);
-            });
-            document.getElementById('stat-c').textContent = data.filter(b => b.status !== 'cancelled').length;
-            document.getElementById('stat-r').textContent = '₹' + rev.toLocaleString();
-        }
-
-        function editB(id) {
-            const data = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-            const b = data.find(x => x.id === id);
-            if (!b) return;
-            document.getElementById('mid').value = b.id;
-            document.getElementById('mtype').value = b.type || 'turf';
-            document.getElementById('mdate').value = b.date;
-            document.getElementById('mtime').value = b.time;
-            document.getElementById('mname').value = b.name;
-            document.getElementById('mphone').value = b.whatsapp;
-            document.getElementById('mprice').value = (b.price||'').replace(/[^0-9]/g, '');
-            document.getElementById('mpay').value = b.payMode || 'Cash';
-            document.getElementById('mcount').value = b.count || 1;
-            document.getElementById('mtitle').textContent = "Edit Booking";
-            toggleMFields();
-            document.getElementById('mbg').style.display = 'flex';
-        }
-
-        function cancelB(id) { if(confirm("Cancel this booking?")) { let d = JSON.parse(localStorage.getItem('turf_bookings')||'[]'); const i = d.findIndex(x => x.id===id); if(i>-1){ d[i].status='cancelled'; localStorage.setItem('turf_bookings', JSON.stringify(d)); showList(); } } }
-
-        function showSch() {
-            const type = document.getElementById('stype').value;
-            const date = document.getElementById('sdate').value;
-            if(!date) return;
-            const [y,m,d] = date.split('-');
-            document.getElementById('sdisplay').textContent = new Date(y, m-1, d).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
-            document.getElementById('stitle').textContent = type === 'turf' ? "TURF SLOTS" : "SWIMMING SLOTS";
-            
-            const data = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-            const booked = data.filter(b => b.date===date && b.type===type && b.status!=='cancelled');
-            const slots = type==='turf' ? TSLOTS : SSLOTS;
-            const grid = document.getElementById('sgrid');
-            grid.innerHTML = '';
-            
-            slots.forEach(s => {
-                const bList = booked.filter(x => x.time===s);
-                let totalP = 0; bList.forEach(x => totalP += parseInt(x.count || 1));
-                
-                const div = document.createElement('div');
-                let status = 'available';
-                if (type === 'turf' && bList.length > 0) status = 'booked';
-                if (type === 'swimming' && totalP >= 50) status = 'full';
-                
-                div.className = 'slot ' + status;
-                let info = '';
-                if (type === 'turf') {
-                    info = bList.length > 0 ? `<span style="color:#ef4444;">${bList[0].name}</span>` : `<span style="color:var(--primary);">Available</span>`;
-                } else {
-                    info = `<span style="${totalP >= 50 ? 'color:#ef4444' : 'color:var(--primary)'}">${totalP}/50 People</span>`;
-                }
-                
-                const price = type==='turf' ? (getP(s)) : 100;
-                div.innerHTML = `<span class="slot-time">${s}</span><div class="slot-info">${info}</div><div class="slot-price">₹${price}${type==='swimming'?'/p':''}</div>`;
-                
-                if(status !== 'full' && (type==='swimming' || status==='available')) {
-                    div.onclick = () => openM(s, type, date, price);
-                }
-                grid.appendChild(div);
-            });
-        }
-
-        function getP(time) {
-            if (time.includes('04:30')) return 600;
-            if (time.includes('05:') || time.includes('06:') || time.includes('07:') || time.includes('08:') || time.includes('09:') || time.includes('10:') || time.includes('11:')) return 700;
-            return 500;
-        }
-
-        function updateAvailableSlots() {
-            const type = document.getElementById('mtype').value;
-            const date = document.getElementById('mdate').value;
-            const timeSelect = document.getElementById('mtime');
-            const currentVal = timeSelect.getAttribute('data-val') || '';
-            timeSelect.innerHTML = '';
-            
-            const data = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-            const booked = data.filter(b => b.date === date && b.type === type && b.status !== 'cancelled');
-            const slots = type === 'turf' ? TSLOTS : SSLOTS;
-            
-            slots.forEach(s => {
-                const isBooked = type === 'turf' && booked.some(b => b.time === s);
-                // For swimming, we allow double bookings up to 50, but we can list all slots
-                if (!isBooked || s === currentVal) {
-                    const opt = document.createElement('option');
-                    opt.value = s;
-                    opt.textContent = s;
-                    if (s === currentVal) opt.selected = true;
-                    timeSelect.appendChild(opt);
-                }
-            });
-        }
-
-        function toggleMFields() {
-            const type = document.getElementById('mtype').value;
-            document.getElementById('mdur-g').style.display = type === 'turf' ? 'flex' : 'none';
-            document.getElementById('mcount-g').style.display = type === 'swimming' ? 'block' : 'none';
-            updateAvailableSlots();
-        }
-        document.getElementById('mtype').onchange = toggleMFields;
-
-        function openM(s, type, date, p) {
-            bp = p;
-            document.getElementById('mid').value = '';
-            document.getElementById('mtype').value = type;
-            document.getElementById('mdate').value = date;
-            document.getElementById('mtime').setAttribute('data-val', s); // Temp store to select
-            document.getElementById('mprice').value = p;
-            document.getElementById('mname').value = '';
-            document.getElementById('mphone').value = '';
-            document.getElementById('mcount').value = 1;
-            document.getElementById('mtitle').textContent = "Manual Booking";
-            toggleMFields();
-            document.getElementById('mbg').style.display = 'flex';
-        }
-
-        function openNew() { 
-            const date = document.getElementById('sdate').value || new Date().toISOString().split('T')[0];
-            const type = document.getElementById('stype').value || 'turf';
-            openM('', type, date, type==='turf'?700:100); 
-        }
-        function closeModal() { document.getElementById('mbg').style.display = 'none'; }
-
-        document.getElementById('mform').onsubmit = (e) => {
-            e.preventDefault();
-            let d = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-            const mid = document.getElementById('mid').value;
-            const type = document.getElementById('mtype').value;
-            const newB = {
-                id: mid || ('A-' + Math.random().toString(36).substring(2,7).toUpperCase()),
-                type: type,
-                name: document.getElementById('mname').value,
-                whatsapp: document.getElementById('mphone').value,
-                date: document.getElementById('mdate').value,
-                time: document.getElementById('mtime').value,
-                price: '₹' + document.getElementById('mprice').value,
-                payMode: document.getElementById('mpay').value,
-                count: type === 'swimming' ? document.getElementById('mcount').value : 1,
-                timestamp: new Date().toISOString(),
-                status: 'confirmed'
-            };
-            if (mid) {
-                const i = d.findIndex(x => x.id === mid);
-                if (i > -1) d[i] = newB;
-            } else d.push(newB);
-            localStorage.setItem('turf_bookings', JSON.stringify(d));
-            closeModal(); showList(); showSch(); alert(mid ? "Updated!" : "Booked!");
-        };
-
-        document.getElementById('mdur').onchange = () => {
-            document.getElementById('mprice').value = Math.round(bp * parseFloat(document.getElementById('mdur').value));
-        };
-        document.getElementById('mcount').onchange = () => {
-            if(document.getElementById('mtype').value === 'swimming') document.getElementById('mprice').value = 100 * parseInt(document.getElementById('mcount').value);
-        };
-
-        function exportCSV() {
-            const data = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-            if (data.length === 0) return alert("No data");
-            let csv = "ID,Type,Name,WhatsApp,Date,Time,Price,PayMode,Status\n";
-            data.forEach(b => { csv += `${b.id},${b.type},${b.name},${b.whatsapp},${b.date},${b.time},${b.price},${b.payMode||''},${b.status||'confirmed'}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'bookings.csv'; a.click();
-        }
-
-        if(sessionStorage.getItem('k6_auth') === 'true') {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('main').style.display = 'block';
-            showList();
-        }
-    </script>
+    <div class="modal-bg" id="slot-modal-bg">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h3 style="margin:0; font-size:20px;">Manage Default Slots</h3>
+                <button onclick="closeSlotModal()" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:24px;"><i class="ph ph-x"></i></button>
+            </div>
+            <div id="slot-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 12px; padding: 10px;"></div>
+            <div class="form-g">
+                <label>Add New Slot Time</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-slot-time" placeholder="e.g. 05:00 AM - 06:00 AM">
+                    <button class="btn btn-p" onclick="addNewSlot()"><i class="ph ph-plus"></i></button>
+                </div>
+            </div>
+            <button class="btn btn-s" onclick="resetSlots()" style="width:100%; justify-content:center; margin-top:10px; color:#ef4444;">Reset to Defaults</button>
+        </div>
+    </div>
+    <script type="module" src="admin.js"></script>
 </body>
 </html>

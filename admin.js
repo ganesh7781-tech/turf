@@ -1,292 +1,354 @@
-// Global State
-let turfSlotData = [
-    { time: '11:30 AM - 12:30 PM', cat: 'morning' },
-    { time: '12:00 PM - 01:00 PM', cat: 'afternoon' }, { time: '01:00 PM - 02:00 PM', cat: 'afternoon' },
-    { time: '02:00 PM - 03:00 PM', cat: 'afternoon' }, { time: '03:00 PM - 04:00 PM', cat: 'afternoon' },
-    { time: '04:00 PM - 05:00 PM', cat: 'afternoon' }, { time: '05:00 PM - 06:00 PM', cat: 'evening' },
-    { time: '06:00 PM - 07:00 PM', cat: 'evening' }, { time: '07:00 PM - 08:00 PM', cat: 'evening' },
-    { time: '08:00 PM - 09:00 PM', cat: 'evening' }, { time: '09:00 PM - 10:00 PM', cat: 'night' },
-    { time: '10:00 PM - 11:00 PM', cat: 'night' }, { time: '11:00 PM - 12:00 AM', cat: 'night' }
-];
+import { db, collection, addDoc, onSnapshot, query, where, orderBy, updateDoc, doc, getDocs } from './firebase-config.js';
 
-let swimSlotData = [
-    { time: '07:00 AM - 08:00 AM', cat: 'morning' }, { time: '08:00 AM - 09:00 AM', cat: 'morning' },
-    { time: '09:00 AM - 10:00 AM', cat: 'morning' }, { time: '10:00 AM - 11:00 AM', cat: 'morning' },
-    { time: '03:00 PM - 04:00 PM', cat: 'afternoon' }, { time: '04:00 PM - 05:00 PM', cat: 'afternoon' },
-    { time: '05:00 PM - 06:00 PM', cat: 'evening' }, { time: '06:00 PM - 07:00 PM', cat: 'evening' },
-    { time: '07:00 PM - 08:00 PM', cat: 'evening' }, { time: '08:00 PM - 09:00 PM', cat: 'evening' }
-];
+window.onerror = function(m, u, l) { alert("Admin Pro Error: " + m); return false; };
 
-let currentFilteredBookings = [];
+const DEFAULT_TSLOTS = ['11:30 AM - 12:30 PM', '12:00 PM - 01:00 PM', '01:00 PM - 02:00 PM', '02:00 PM - 03:00 PM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM', '09:00 PM - 10:00 PM', '10:00 PM - 11:00 PM', '11:00 PM - 12:00 AM'];
+const DEFAULT_SSLOTS = ['07:00 AM - 08:00 AM', '08:00 AM - 09:00 AM', '09:00 AM - 10:00 AM', '10:00 AM - 11:00 AM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM'];
 
-function getPriceForSlot(time) {
-    if (time.includes('04:30')) return '600';
-    if (time.includes('05:') || time.includes('06:') || time.includes('07:') || time.includes('08:') || time.includes('09:') || time.includes('10:') || time.includes('11:')) return '700';
-    return '500';
+let TSLOTS = JSON.parse(localStorage.getItem('k6_tslots')) || [...DEFAULT_TSLOTS];
+let SSLOTS = JSON.parse(localStorage.getItem('k6_sslots')) || [...DEFAULT_SSLOTS];
+let bp = 700;
+let allBookings = [];
+
+// ATTACH FUNCTIONS TO WINDOW FOR HTML CALLS
+window.doLogin = () => {
+    if (document.getElementById('pw').value === 'k6admin') {
+        sessionStorage.setItem('k6_auth', 'true');
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        initFirebase();
+    } else alert("Invalid Password");
+};
+
+window.setTab = (id) => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tb-' + id).classList.add('active');
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.getElementById(id + '-tab').classList.add('active');
+    if (id === 'sch') {
+        if(!document.getElementById('sdate').value) document.getElementById('sdate').value = new Date().toISOString().split('T')[0];
+        showSch();
+    } else showList();
+};
+
+function initFirebase() {
+    const bookingsRef = collection(db, 'bookings');
+    onSnapshot(bookingsRef, (snapshot) => {
+        allBookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        window.showList();
+        window.showSch();
+    });
 }
 
-window.loadBookings = function(startDateStr = null, endDateStr = null) {
-    const bookingsData = localStorage.getItem('turf_bookings');
-    const bookings = bookingsData ? JSON.parse(bookingsData) : [];
-    
-    const filterFrom = document.getElementById('filter-from');
-    const filterTo = document.getElementById('filter-to');
-    const typeFilter = document.getElementById('type-filter');
-    const bookingsBody = document.getElementById('bookings-body');
-    const emptyState = document.getElementById('empty-state');
-    const tableElement = document.getElementById('bookings-table');
-    const totalBookingsEl = document.getElementById('total-bookings');
-    const totalRevenueEl = document.getElementById('total-revenue');
+window.showList = () => {
+    if (!document.getElementById('btable')) return;
+    const data = [...allBookings];
+    data.sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0));
+    const body = document.getElementById('btable');
+    body.innerHTML = '';
+    let totalRev = 0;
+    let todayRev = 0;
+    let pendingPay = 0;
+    const today = new Date().toISOString().split('T')[0];
 
-    let filtered = [...bookings];
-
-    const startVal = startDateStr !== null ? startDateStr : (filterFrom ? filterFrom.value : "");
-    const endVal = endDateStr !== null ? endDateStr : (filterTo ? filterTo.value : "");
-    const type = typeFilter ? typeFilter.value : 'all';
-
-    if (startVal && startVal !== "") {
-        const s = new Date(startVal); s.setHours(0,0,0,0);
-        filtered = filtered.filter(b => {
-            const bDate = new Date(b.date); bDate.setHours(0,0,0,0);
-            return bDate >= s;
-        });
-    }
-    if (endVal && endVal !== "") {
-        const e = new Date(endVal); e.setHours(23,59,59,999);
-        filtered = filtered.filter(b => {
-            const bDate = new Date(b.date); bDate.setHours(0,0,0,0);
-            return bDate <= e;
-        });
-    }
-    if (type !== 'all') {
-        filtered = filtered.filter(b => b.type === type);
-    }
-
-    currentFilteredBookings = [...filtered];
-    filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Newest by timestamp
-
-    if (totalBookingsEl) totalBookingsEl.textContent = filtered.filter(b => b.status !== 'cancelled').length;
-    
-    let revenue = 0;
-    filtered.forEach(b => {
-        if (b.status !== 'cancelled' && b.price) {
-            revenue += parseInt(b.price.replace(/[^0-9]/g, '')) || 0;
+    data.forEach(b => {
+        const bPrice = parseInt((b.price||'0').replace(/[^0-9]/g, '')) || 0;
+        if(b.status !== 'cancelled') {
+            totalRev += bPrice;
+            if(b.date === today) todayRev += bPrice;
+            if(b.payMode === 'Pending') pendingPay += bPrice;
         }
-    });
-    if (totalRevenueEl) totalRevenueEl.textContent = `₹${revenue}`;
-
-    if (filtered.length === 0) {
-        if (tableElement) tableElement.style.display = 'none';
-        if (emptyState) emptyState.style.display = 'block';
-        return;
-    }
-
-    if (tableElement) tableElement.style.display = 'table';
-    if (emptyState) emptyState.style.display = 'none';
-    
-    if (bookingsBody) {
-        bookingsBody.innerHTML = '';
-        filtered.forEach(b => {
-            const tr = document.createElement('tr');
-            const bDate = new Date(b.date);
-            const dateStr = isNaN(bDate.getTime()) ? b.date : bDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const whatsappClean = (b.whatsapp || '').replace(/[^0-9]/g, '');
-            
-            tr.innerHTML = `
-                <td><strong>${b.id}</strong></td>
-                <td><span style="color:${b.type === 'swimming' ? '#0ea5e9' : '#10b981'}; font-weight:700;">${b.type.toUpperCase()}</span></td>
-                <td>${b.name}</td>
-                <td><a href="https://wa.me/${whatsappClean}" target="_blank" style="color:var(--primary); font-weight:600;">${b.whatsapp}</a></td>
-                <td>${dateStr}</td>
-                <td>${b.time}</td>
-                <td><strong>${b.price}</strong></td>
-                <td>
-                    <span class="badge" style="${b.status === 'cancelled' ? 'background:var(--danger);color:white;' : 'background:#dcfce7;color:#166534;'}">
-                        ${b.status === 'cancelled' ? 'Cancelled' : 'Confirmed'}
-                    </span>
-                </td>
-                <td>
-                    ${b.status !== 'cancelled' ? `<button onclick="cancelBooking('${b.id}')" class="btn-cancel" style="border:1px solid var(--danger); color:var(--danger); background:white; padding:0.25rem 0.5rem; font-size:0.75rem; border-radius:4px; cursor:pointer;">Cancel</button>` : ''}
-                </td>
-            `;
-            bookingsBody.appendChild(tr);
-        });
-    }
-};
-
-window.cancelBooking = function(id) {
-    if (confirm("Cancel booking " + id + "?")) {
-        let bookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-        const idx = bookings.findIndex(b => b.id === id);
-        if (idx > -1) {
-            bookings[idx].status = 'cancelled';
-            localStorage.setItem('turf_bookings', JSON.stringify(bookings));
-            loadBookings();
-        }
-    }
-};
-
-window.loadSchedule = function() {
-    const scheduleTypeEl = document.getElementById('schedule-type');
-    const scheduleDateEl = document.getElementById('schedule-date');
-    if (!scheduleTypeEl || !scheduleDateEl) return;
-
-    const type = scheduleTypeEl.value;
-    const date = scheduleDateEl.value;
-    const grid = document.getElementById('schedule-slots-grid');
-    const displayDate = document.getElementById('schedule-display-date');
-    const title = document.getElementById('schedule-title');
-
-    if (!date || !grid) return;
-
-    const dateObj = new Date(date);
-    if (displayDate) displayDate.textContent = isNaN(dateObj.getTime()) ? date : dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-    if (title) title.textContent = `${type.toUpperCase()} Slots`;
-
-    const bookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-    const booked = bookings.filter(b => b.date === date && b.type === type && b.status !== 'cancelled');
-    const slots = type === 'turf' ? turfSlotData : swimSlotData;
-
-    grid.innerHTML = '';
-    slots.forEach(slot => {
-        const booking = booked.find(b => b.time === slot.time);
-        const div = document.createElement('div');
-        div.className = `slot-btn ${booking ? 'booked' : ''}`;
-        div.style.height = 'auto'; div.style.padding = '1rem';
         
-        if (booking) {
-            div.innerHTML = `
-                <div style="font-weight:700;">${slot.time}</div>
-                <div style="color:var(--danger); font-size:0.8rem; margin-top:0.5rem; font-weight:600;"><i class="ph-fill ph-user"></i> ${booking.name}</div>
-                <div style="font-size:0.7rem; color:var(--text-muted);">${booking.whatsapp}</div>
-            `;
+        const tr = document.createElement('tr');
+        const bc = b.status === 'cancelled' ? 'badge-cancel' : (b.status === 'pending' ? 'badge-pending' : 'badge-ok');
+        const pc = b.payMode === 'UPI' ? 'badge-upi' : (b.payMode==='Cash'?'badge-cash':'badge-pending');
+        const source = b.source || (b.bookingId && b.bookingId.startsWith('A-') ? 'Admin' : 'Online');
+        
+        tr.innerHTML = `
+            <td><small>#${(b.bookingId || b.id).slice(-5)}</small></td>
+            <td><span class="badge" style="background:#f1f5f9; color:#475569;">${source}</span></td>
+            <td><b>${b.name}</b></td>
+            <td>${b.whatsapp}</td>
+            <td>${b.date}</td>
+            <td>${b.time}</td>
+            <td>${b.price}</td>
+            <td><span class="badge ${pc}">${b.payMode||'?'}${b.count?` (${b.count}p)`:''}</span></td>
+            <td><span class="badge ${bc}">${b.status||'confirmed'}</span></td>
+            <td>
+                <div style="display:flex; gap:5px;">
+                    ${b.status === 'pending' ? `<button class="btn btn-p" style="padding:6px; background:#f59e0b;" onclick="approveB('${b.id}')" title="Approve Payment"><i class="ph ph-check-circle"></i></button>` : ''}
+                    <button class="btn btn-s" style="padding:6px;" onclick="editB('${b.id}')"><i class="ph ph-pencil"></i></button>
+                    <button class="btn-d" onclick="cancelB('${b.id}')"><i class="ph ph-trash"></i></button>
+                </div>
+            </td>
+        `;
+        body.appendChild(tr);
+    });
+    document.getElementById('stat-c').textContent = data.filter(b => b.status !== 'cancelled').length;
+    document.getElementById('stat-r-today').textContent = '₹' + todayRev.toLocaleString();
+    document.getElementById('stat-pending').textContent = '₹' + pendingPay.toLocaleString();
+    if (document.getElementById('db-total-records')) {
+        document.getElementById('db-total-records').textContent = data.length;
+    }
+}
+
+window.editB = (id) => {
+    const b = allBookings.find(x => x.id === id);
+    if (!b) return;
+    document.getElementById('mid').value = b.id;
+    document.getElementById('mtype').value = b.type || 'turf';
+    document.getElementById('mdate').value = b.date;
+    document.getElementById('mtime').setAttribute('data-val', b.time); 
+    document.getElementById('mname').value = b.name;
+    document.getElementById('mphone').value = b.whatsapp;
+    document.getElementById('mprice').value = (b.price||'').replace(/[^0-9]/g, '');
+    document.getElementById('mpay').value = b.payMode || 'Cash';
+    document.getElementById('mcount').value = b.count || 1;
+    document.getElementById('mtitle').textContent = "Edit Booking";
+    toggleMFields();
+    document.getElementById('mbg').style.display = 'flex';
+};
+
+window.approveB = async (id) => {
+    if(confirm("Confirm payment received and approve this booking?")) {
+        try {
+            const bRef = doc(db, 'bookings', id);
+            await updateDoc(bRef, { status: 'confirmed' });
+        } catch (e) {
+            console.error(e);
+            alert("Error approving booking");
+        }
+    }
+};
+
+window.cancelB = async (id) => {
+    if(confirm("Cancel this booking?")) {
+        try {
+            const bRef = doc(db, 'bookings', id);
+            await updateDoc(bRef, { status: 'cancelled' });
+        } catch (e) {
+            console.error(e);
+            alert("Error cancelling booking");
+        }
+    }
+};
+
+window.showSch = () => {
+    const type = document.getElementById('stype').value;
+    const date = document.getElementById('sdate').value;
+    if(!date || !document.getElementById('sgrid')) return;
+    
+    const [y,m,d] = date.split('-');
+    document.getElementById('sdisplay').textContent = new Date(y, m-1, d).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
+    document.getElementById('stitle').textContent = type === 'turf' ? "TURF SLOTS" : "SWIMMING SLOTS";
+    
+    const booked = allBookings.filter(b => b.date===date && b.type===type && b.status!=='cancelled');
+    const slots = type==='turf' ? TSLOTS : SSLOTS;
+    const grid = document.getElementById('sgrid');
+    grid.innerHTML = '';
+    
+    let bookedCount = 0;
+    let totalSlots = slots.length;
+
+    slots.forEach(s => {
+        const bList = booked.filter(x => x.time===s || x.time === 'Full Day');
+        let totalP = 0; bList.forEach(x => totalP += parseInt(x.count || 1));
+        
+        const div = document.createElement('div');
+        let status = 'available';
+        if (type === 'turf' && bList.length > 0) { status = 'booked'; bookedCount++; }
+        if (type === 'swimming' && totalP >= 50) { status = 'full'; bookedCount++; }
+        
+        div.className = 'slot ' + status;
+        let info = '';
+        if (type === 'turf') {
+            info = bList.length > 0 ? `<span style="color:#ef4444;">${bList[0].name}</span>` : `<span style="color:var(--primary);">Available</span>`;
         } else {
-            const price = type === 'turf' ? '₹' + getPriceForSlot(slot.time) : '₹100/p';
-            div.innerHTML = `
-                <div>${slot.time}</div>
-                <div style="color:var(--primary); font-weight:700;">${price}</div>
-                <div style="font-size:0.7rem; color:var(--primary); margin-top:0.5rem; font-weight:600;">+ Add Manual</div>
-            `;
-            div.style.cursor = 'pointer';
-            div.onclick = () => openManualBookingModal(slot.time, type, date, price);
+            info = `<span style="${totalP >= 50 ? 'color:#ef4444' : 'color:var(--primary)'}">${totalP}/50 People</span>`;
+        }
+        
+        const price = type==='turf' ? (getP(s)) : 100;
+        div.innerHTML = `<span class="slot-time">${s}</span><div class="slot-info">${info}</div><div class="slot-price">₹${price}${type==='swimming'?'/p':''}</div>`;
+        
+        if(status !== 'full' && (type==='swimming' || status==='available')) {
+            div.onclick = () => openM(s, type, date, price);
         }
         grid.appendChild(div);
     });
+
+    document.getElementById('stat-booked').textContent = bookedCount;
+    document.getElementById('stat-empty').textContent = totalSlots - bookedCount;
 };
 
-window.initScheduleView = function() {
-    const dateInp = document.getElementById('schedule-date');
-    if (dateInp && !dateInp.value) {
-        dateInp.value = new Date().toISOString().split('T')[0];
+window.manageSlots = () => {
+    const type = document.getElementById('stype').value;
+    const slots = type === 'turf' ? TSLOTS : SSLOTS;
+    const list = document.getElementById('slot-list');
+    list.innerHTML = '';
+    slots.forEach((s, i) => {
+        const item = document.createElement('div');
+        item.style = "display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee;";
+        item.innerHTML = `<span>${s}</span><button class="btn-d" onclick="deleteSlot(${i})"><i class="ph ph-trash"></i></button>`;
+        list.appendChild(item);
+    });
+    document.getElementById('slot-modal-bg').style.display = 'flex';
+};
+
+window.deleteSlot = (index) => {
+    const type = document.getElementById('stype').value;
+    if (type === 'turf') { TSLOTS.splice(index, 1); localStorage.setItem('k6_tslots', JSON.stringify(TSLOTS)); }
+    else { SSLOTS.splice(index, 1); localStorage.setItem('k6_sslots', JSON.stringify(SSLOTS)); }
+    window.manageSlots(); window.showSch();
+};
+
+window.addNewSlot = () => {
+    const time = document.getElementById('new-slot-time').value;
+    if (!time) return alert("Enter time");
+    const type = document.getElementById('stype').value;
+    if (type === 'turf') { TSLOTS.push(time); localStorage.setItem('k6_tslots', JSON.stringify(TSLOTS)); }
+    else { SSLOTS.push(time); localStorage.setItem('k6_sslots', JSON.stringify(SSLOTS)); }
+    document.getElementById('new-slot-time').value = '';
+    window.manageSlots(); window.showSch();
+};
+
+window.resetSlots = () => {
+    if(confirm("Reset to default slots?")) {
+        const type = document.getElementById('stype').value;
+        if(type === 'turf') { TSLOTS = [...DEFAULT_TSLOTS]; localStorage.removeItem('k6_tslots'); }
+        else { SSLOTS = [...DEFAULT_SSLOTS]; localStorage.removeItem('k6_sslots'); }
+        window.manageSlots(); window.showSch();
     }
-    loadSchedule();
 };
 
-let currentManualData = null;
-function openManualBookingModal(time, type, date, price) {
-    currentManualData = { time, type, date };
-    document.getElementById('manual-slot-time').value = time;
-    document.getElementById('manual-slot-display').textContent = `${time} (${type.toUpperCase()})`;
-    document.getElementById('manual-price').value = price.replace(/[^0-9]/g, '');
-    const durationGroup = document.getElementById('manual-duration-group');
-    if (durationGroup) durationGroup.style.display = type === 'turf' ? 'block' : 'none';
-    document.getElementById('manual-booking-modal').classList.add('active');
+window.closeSlotModal = () => { document.getElementById('slot-modal-bg').style.display = 'none'; };
+
+function getP(time) {
+    if (time.includes('04:30')) return 600;
+    if (time.includes('05:') || time.includes('06:') || time.includes('07:') || time.includes('08:') || time.includes('09:') || time.includes('10:') || time.includes('11:')) return 700;
+    return 500;
 }
 
-window.closeModal = function(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('active');
-};
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Auth Check
-    if (sessionStorage.getItem('admin_logged_in') === 'true') {
-        const overlay = document.getElementById('login-overlay');
-        const main = document.getElementById('admin-main');
-        if (overlay) overlay.style.display = 'none';
-        if (main) main.style.display = 'block';
-        loadBookings();
-    }
-
-    // Manual Form Submit
-    const manualForm = document.getElementById('manual-booking-form');
-    if (manualForm) {
-        manualForm.onsubmit = (e) => {
-            e.preventDefault();
-            const bookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-            const newBooking = {
-                id: 'ADMIN-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-                type: currentManualData.type,
-                name: document.getElementById('manual-name').value,
-                whatsapp: document.getElementById('manual-whatsapp').value,
-                date: currentManualData.date,
-                time: currentManualData.time,
-                price: '₹' + document.getElementById('manual-price').value,
-                utr: 'Manual Admin Entry',
-                status: 'confirmed',
-                timestamp: new Date().toISOString()
-            };
-            bookings.push(newBooking);
-            localStorage.setItem('turf_bookings', JSON.stringify(bookings));
-            
-            closeModal('manual-booking-modal');
-            manualForm.reset();
-            loadSchedule();
-            loadBookings(); // Refresh bookings list immediately
-            alert("Booking added successfully!");
-        };
-    }
-
-    // Buttons
-    const viewBtn = document.getElementById('view-schedule');
-    if (viewBtn) viewBtn.onclick = loadSchedule;
+window.updateAvailableSlots = () => {
+    const type = document.getElementById('mtype').value;
+    const date = document.getElementById('mdate').value;
+    const timeSelect = document.getElementById('mtime');
+    const currentVal = timeSelect.getAttribute('data-val') || '';
+    timeSelect.innerHTML = '';
     
-    const refreshBtn = document.getElementById('refresh-schedule');
-    if (refreshBtn) refreshBtn.onclick = loadSchedule;
-
-    const applyFilterBtn = document.getElementById('apply-filter');
-    if (applyFilterBtn) applyFilterBtn.onclick = () => loadBookings();
-
-    const resetFilterBtn = document.getElementById('reset-filter');
-    if (resetFilterBtn) resetFilterBtn.onclick = () => {
-        document.getElementById('filter-from').value = '';
-        document.getElementById('filter-to').value = '';
-        loadBookings();
-    };
-
-    const clearDataBtn = document.getElementById('clear-data');
-    if (clearDataBtn) clearDataBtn.onclick = () => {
-        if (confirm("Delete ALL bookings? This cannot be undone.")) {
-            localStorage.removeItem('turf_bookings');
-            loadBookings();
-            loadSchedule();
+    const booked = allBookings.filter(b => b.date === date && b.type === type && b.status !== 'cancelled');
+    const slots = type === 'turf' ? [...TSLOTS, 'Full Day'] : SSLOTS;
+    
+    slots.forEach(s => {
+        const isBooked = type === 'turf' && (booked.some(b => b.time === s) || booked.some(b => b.time === 'Full Day'));
+        if (!isBooked || s === currentVal) {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            if (s === currentVal) opt.selected = true;
+            timeSelect.appendChild(opt);
         }
-    };
-    
-    const exportBtn = document.getElementById('export-csv');
-    if (exportBtn) exportBtn.onclick = () => {
-        if (currentFilteredBookings.length === 0) return alert("No data to export");
-        let csv = "ID,Type,Name,WhatsApp,Date,Time,Price,Status\n";
-        currentFilteredBookings.forEach(b => {
-            csv += `${b.id},${b.type},${b.name},${b.whatsapp},${b.date},${b.time},${b.price},${b.status}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'bookings.csv'; a.click();
-    };
-});
+    });
+};
 
-window.verifyAdmin = function() {
-    const passInput = document.getElementById('admin-password');
-    if (!passInput) return;
-    const pass = passInput.value;
-    if (pass === 'k6admin') {
-        sessionStorage.setItem('admin_logged_in', 'true');
-        location.reload();
-    } else {
-        const err = document.getElementById('login-error');
-        if (err) err.style.display = 'block';
+function toggleMFields() {
+    const type = document.getElementById('mtype').value;
+    document.getElementById('mdur-g').style.display = type === 'turf' ? 'flex' : 'none';
+    document.getElementById('mcount-g').style.display = type === 'swimming' ? 'block' : 'none';
+    window.updateAvailableSlots();
+}
+
+function openM(s, type, date, p) {
+    bp = p;
+    document.getElementById('mid').value = '';
+    document.getElementById('mtype').value = type;
+    document.getElementById('mdate').value = date;
+    document.getElementById('mtime').setAttribute('data-val', s); 
+    document.getElementById('mprice').value = p;
+    document.getElementById('mname').value = '';
+    document.getElementById('mphone').value = '';
+    document.getElementById('mcount').value = 1;
+    document.getElementById('mtitle').textContent = "Manual Booking";
+    toggleMFields();
+    document.getElementById('mbg').style.display = 'flex';
+}
+
+window.openNew = () => { 
+    const date = document.getElementById('sdate').value || new Date().toISOString().split('T')[0];
+    const type = document.getElementById('stype').value || 'turf';
+    openM('', type, date, type==='turf'?700:100); 
+};
+
+window.closeModal = () => { document.getElementById('mbg').style.display = 'none'; };
+
+document.getElementById('mform').onsubmit = async (e) => {
+    e.preventDefault();
+    const mid = document.getElementById('mid').value;
+    const type = document.getElementById('mtype').value;
+    const newB = {
+        type: type,
+        name: document.getElementById('mname').value,
+        whatsapp: document.getElementById('mphone').value,
+        date: document.getElementById('mdate').value,
+        time: document.getElementById('mtime').value,
+        price: '₹' + document.getElementById('mprice').value,
+        payMode: document.getElementById('mpay').value,
+        count: type === 'swimming' ? document.getElementById('mcount').value : 1,
+        timestamp: new Date().toISOString(),
+        status: 'confirmed',
+        source: 'Admin'
+    };
+
+    if (!mid) {
+        newB.bookingId = 'A-' + Math.random().toString(36).substring(2,7).toUpperCase();
+    }
+
+    try {
+        if (mid) {
+            const bRef = doc(db, 'bookings', mid);
+            await updateDoc(bRef, newB);
+        } else {
+            await addDoc(collection(db, 'bookings'), newB);
+        }
+        window.closeModal();
+        alert(mid ? "Updated!" : "Booked!");
+    } catch (err) {
+        console.error(err);
+        alert("Error saving booking");
     }
 };
+
+document.getElementById('mdur').onchange = () => {
+    const dur = document.getElementById('mdur').value;
+    if (dur === 'full') {
+        document.getElementById('mprice').value = 5000;
+        document.getElementById('mtime').innerHTML = '<option value="Full Day">Full Day</option>';
+    } else {
+        document.getElementById('mprice').value = Math.round(bp * parseFloat(dur));
+        window.updateAvailableSlots();
+    }
+};
+
+document.getElementById('mcount').onchange = () => {
+    if(document.getElementById('mtype').value === 'swimming') document.getElementById('mprice').value = 100 * parseInt(document.getElementById('mcount').value);
+};
+
+window.exportCSV = () => {
+    if (allBookings.length === 0) return alert("No data");
+    let csv = "ID,Type,Name,WhatsApp,Date,Time,Price,PayMode,Status\n";
+    allBookings.forEach(b => { csv += `${b.bookingId || b.id},${b.type},${b.name},${b.whatsapp},${b.date},${b.time},${b.price},${b.payMode||''},${b.status||'confirmed'}\n`; });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'bookings.csv'; a.click();
+};
+
+// INITIAL AUTH CHECK
+if(sessionStorage.getItem('k6_auth') === 'true') {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    initFirebase();
+}
+
+// SETUP SELECT EVENT
+document.getElementById('mtype').onchange = toggleMFields;
+document.getElementById('stype').onchange = window.showSch;
+document.getElementById('sdate').onchange = window.showSch;
