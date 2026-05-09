@@ -4,267 +4,121 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>K6 Turf & Swimming</title>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <meta name="theme-color" content="#10b981">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* INLINED style.css */
-        :root {
-            --primary: #10b981; --primary-hover: #059669; --primary-light: #ecfdf5; --primary-border: #a7f3d0;
-            --surface: #ffffff; --background: #f0fdf4; --text-main: #0f172a; --text-muted: #64748b;
-            --border: #e2e8f0; --danger: #ef4444; --success: #10b981;
-            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-full: 9999px;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.25);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f0fdf4; color: var(--text-main); line-height: 1.5; -webkit-font-smoothing: antialiased; }
-        .app-container { max-width: 1200px; margin: 0 auto; padding: 1rem; padding-bottom: 2rem; }
-        .app-header { text-align: center; margin-bottom: 1.5rem; padding: 1.5rem 1rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
-        .logo-container { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 0.5rem; }
-        .app-header h1 { font-size: 1.75rem; margin: 0; color: white; }
-        .main-layout { display: flex; flex-direction: column; gap: 1rem; }
-        .card { background: var(--surface); border-radius: 20px; box-shadow: var(--shadow-md); padding: 1.5rem; border: 1px solid rgba(255, 255, 255, 0.8); }
-        .form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-        .form-group label { font-size: 0.875rem; font-weight: 600; color: var(--text-main); }
-        .input-wrapper { position: relative; display: flex; align-items: center; }
-        .input-wrapper i { position: absolute; left: 1rem; color: var(--text-muted); font-size: 1.25rem; }
-        input, select { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1.5px solid #cbd5e1; border-radius: var(--radius-md); font-family: inherit; font-size: 1rem; background: #f8fafc; }
-        .btn-primary { width: 100%; background: var(--primary); color: white; border: none; border-radius: var(--radius-md); padding: 1rem; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-md); }
-        .btn-primary:disabled { background: var(--border); color: var(--text-muted); }
-        .slots-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .date-display { background: var(--primary-light); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 600; }
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
-        .slot-btn { background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 1rem 0.5rem; text-align: center; display: flex; flex-direction: column; gap: 0.25rem; transition: 0.2s; }
-        .slot-btn.selected { background: var(--primary); border-color: var(--primary-hover); color: white; }
-        .slot-btn.selected span { color: white; }
-        .slot-btn.booked { opacity: 0.5; background: #f1f5f9; cursor: not-allowed; }
-        .slot-time { font-size: 0.85rem; font-weight: 600; }
-        .slot-price { font-size: 0.9rem; font-weight: 700; color: var(--primary); }
-        .slot-btn.selected .slot-price { color: white; }
-        
-        /* Landing View SPA */
-        .landing-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; gap: 2rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); }
-        .choice-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; width: 100%; max-width: 400px; }
-        .choice-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg); transition: 0.2s; }
-        .card-image { width: 100%; height: 160px; }
-        .card-image img { width: 100%; height: 100%; object-fit: cover; }
-        .choice-content { padding: 1.25rem; text-align: center; }
-        .choice-icon { width: 50px; height: 50px; background: var(--primary-light); color: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: -2.5rem auto 1rem auto; border: 3px solid white; }
-        .choice-btn { background: var(--primary); color: white; padding: 0.75rem; border-radius: 50px; font-weight: 700; margin: 0 1.25rem 1.25rem 1.25rem; text-align: center; }
-        
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-        .back-btn { position: absolute; top: 1rem; left: 1rem; background: rgba(0,0,0,0.1); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 50px; font-weight: 600; z-index: 10; }
-        
-        /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-        .modal-overlay.active { display: flex; }
-        .modal { background: white; padding: 1.5rem; border-radius: 20px; width: 100%; max-width: 400px; }
-        .confirm-details-card { background: #f8fafc; border-radius: 12px; padding: 1rem; margin: 1rem 0; text-align: left; }
-        .confirm-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .modal-actions { display: flex; gap: 0.75rem; }
-        .btn-confirm { flex: 1; background: #1d4ed8; color: white; border: none; padding: 0.75rem; border-radius: 10px; font-weight: 700; }
-        .btn-cancel { flex: 1; background: #f1f5f9; border: none; padding: 0.75rem; border-radius: 10px; font-weight: 700; }
-        
-        /* Swimming Theme */
-        .swimming-theme .app-header { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
-        .swimming-theme .choice-btn, .swimming-theme .btn-primary { background: #0ea5e9; }
-        .swimming-theme .slot-btn.selected { background: #0ea5e9; border-color: #0284c7; }
-        .swimming-theme .date-display { background: #e0f2fe; color: #0369a1; }
-        
-        @media (max-width: 400px) {
-            .app-header h1 { font-size: 1.5rem; }
-            .slots-grid { grid-template-columns: 1fr 1fr; }
-        }
-    </style>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-
+<body class="turf-theme">
+    <!-- LANDING VIEW -->
     <div id="landing-view" class="view-section active">
-        <div class="landing-container">
-            <img src="k6 logo.png" onclick="logoClick()" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; background: black;">
-            <div class="landing-header">
-                <h1>K6 Turf</h1>
-                <p>Choose your service</p>
+        <div class="landing-container" style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; gap: 2rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+            <div class="landing-header" style="text-align: center; margin-bottom: 1rem;">
+                <img src="k6 logo.png" alt="K6 Logo" onclick="logoClick()" style="width: 150px; height: 150px; border-radius: 50%; border: 5px solid white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); margin-bottom: 2rem; background: black; cursor: pointer;">
+                <h1 style="font-size: 2.5rem; color: #0f172a; margin-bottom: 0.5rem;">Welcome to K6 Turf</h1>
+                <p style="color: #64748b; font-size: 1.1rem;">Select a service to proceed with your booking</p>
             </div>
-            <div class="choice-grid">
-                <div class="choice-card" onclick="showView('turf')">
-                    <div class="card-image"><img src="turf_preview.png"></div>
-                    <div class="choice-content">
-                        <div class="choice-icon"><i class="ph-fill ph-baseball"></i></div>
-                        <h2>Book Turf</h2>
+
+            <div class="choice-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%; max-width: 900px;">
+                <div class="choice-card" onclick="showView('turf')" style="background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); display: flex; flex-direction: column; cursor: pointer;">
+                    <div class="card-image" style="width: 100%; height: 180px; overflow: hidden;"><img src="turf_preview.png" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div class="choice-content" style="padding: 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+                        <div class="choice-icon" style="font-size: 2rem; color: #10b981; background: #ecfdf5; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 16px; margin-top: -3rem; border: 4px solid white;"><i class="ph-fill ph-baseball"></i></div>
+                        <h2 style="font-size: 1.5rem;">Book Turf</h2>
+                        <p style="color: #64748b;">Premium football & cricket turf.</p>
                     </div>
-                    <div class="choice-btn">Start Booking</div>
+                    <div class="choice-btn" style="background: #10b981; color: white; padding: 0.75rem; border-radius: 50px; font-weight: 600; margin: 0 1.5rem 1.5rem 1.5rem; text-align: center;">Go to Turf</div>
                 </div>
-                <div class="choice-card" onclick="showView('swimming')">
-                    <div class="card-image"><img src="swimming_preview.png"></div>
-                    <div class="choice-content">
-                        <div class="choice-icon" style="color:#0ea5e9; background:#e0f2fe;"><i class="ph-fill ph-waves"></i></div>
-                        <h2>Book Swimming</h2>
+
+                <div class="choice-card" onclick="showView('swimming')" style="background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); display: flex; flex-direction: column; cursor: pointer;">
+                    <div class="card-image" style="width: 100%; height: 180px; overflow: hidden;"><img src="swimming_preview.png" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <div class="choice-content" style="padding: 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+                        <div class="choice-icon" style="font-size: 2rem; color: #0ea5e9; background: #f0f9ff; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 16px; margin-top: -3rem; border: 4px solid white;"><i class="ph-fill ph-waves"></i></div>
+                        <h2 style="font-size: 1.5rem;">Book Swimming</h2>
+                        <p style="color: #64748b;">Crystal clear pool.</p>
                     </div>
-                    <div class="choice-btn" style="background:#0ea5e9;">Start Booking</div>
+                    <div class="choice-btn" style="background: #0ea5e9; color: white; padding: 0.75rem; border-radius: 50px; font-weight: 600; margin: 0 1.5rem 1.5rem 1.5rem; text-align: center;">Go to Pool</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- VIEWS WILL BE POPULATED VIA app.js Logic -->
     <div id="turf-view" class="view-section">
-        <button class="back-btn" onclick="showView('landing')">← Back</button>
+        <button class="back-btn" onclick="showView('landing')" style="position: absolute; top: 1rem; left: 1rem; background: rgba(0,0,0,0.1); color: white; border: none; padding: 0.5rem 1rem; border-radius: 50px; font-weight: 600; z-index: 10;">← Back</button>
         <div class="app-container">
-            <header class="app-header">
-                <h1>K6 Turf</h1>
-                <p>Select your slot</p>
-            </header>
-            <div class="main-layout">
-                <div class="card">
-                    <div class="form-group"><label>Date</label><input type="date" id="turf-date"></div>
-                    <div class="form-group"><label>WhatsApp</label><input type="tel" id="turf-whatsapp" placeholder="Number"></div>
-                    <div class="form-group"><label>Name</label><input type="text" id="turf-name" placeholder="Name"></div>
+            <header class="app-header"><h1>K6 Turf</h1><p>Select your slot</p></header>
+            <main class="main-layout">
+                <div class="card form-card">
+                    <div class="form-group"><label>Full Name</label><div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="turf-name" required></div></div>
+                    <div class="form-group"><label>WhatsApp</label><div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="turf-whatsapp" required></div></div>
+                    <div class="form-group"><label>Date</label><div class="input-wrapper"><i class="ph ph-calendar-blank"></i><input type="date" id="turf-date" required></div></div>
                 </div>
-                <div class="card">
-                    <div class="slots-header"><h3>Slots</h3><div class="date-display" id="turf-display-date">Today</div></div>
-                    <div class="slots-grid" id="turf-slots"></div>
-                    <button class="btn-primary" id="turf-book-btn" disabled style="margin-top:1rem;">Review Booking</button>
+                <div class="card slots-card">
+                    <div class="slots-header"><h2>Select Slot</h2><div class="date-display" id="turf-display-date">Today</div></div>
+                    <div id="turf-morning-slots" class="slots-grid"></div>
+                    <div id="turf-afternoon-slots" class="slots-grid"></div>
+                    <div id="turf-evening-slots" class="slots-grid"></div>
+                    <div id="turf-night-slots" class="slots-grid"></div>
+                    <button class="btn-primary" id="turf-book-btn-mobile" disabled>Review Booking</button>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 
     <div id="swimming-view" class="view-section swimming-theme">
-        <button class="back-btn" onclick="showView('landing')">← Back</button>
+        <button class="back-btn" onclick="showView('landing')" style="position: absolute; top: 1rem; left: 1rem; background: rgba(0,0,0,0.1); color: white; border: none; padding: 0.5rem 1rem; border-radius: 50px; font-weight: 600; z-index: 10;">← Back</button>
         <div class="app-container">
-            <header class="app-header">
-                <h1>K6 Swimming</h1>
-                <p>Select session</p>
-            </header>
-            <div class="main-layout">
-                <div class="card">
-                    <div class="form-group"><label>Date</label><input type="date" id="swim-date"></div>
-                    <div class="form-group"><label>People</label><input type="number" id="swim-people" value="1" min="1"></div>
-                    <div class="form-group"><label>Name</label><input type="text" id="swim-name" placeholder="Name"></div>
+            <header class="app-header"><h1>K6 Swimming</h1><p>Select session</p></header>
+            <main class="main-layout">
+                <div class="card form-card">
+                    <div class="form-group"><label>Full Name</label><div class="input-wrapper"><i class="ph ph-user"></i><input type="text" id="swim-name" required></div></div>
+                    <div class="form-group"><label>WhatsApp</label><div class="input-wrapper"><i class="ph ph-whatsapp-logo"></i><input type="tel" id="swim-whatsapp" required></div></div>
+                    <div class="form-group"><label>People</label><div class="input-wrapper"><i class="ph ph-users"></i><input type="number" id="swim-people" value="1" min="1" required></div></div>
+                    <div class="form-group"><label>Date</label><div class="input-wrapper"><i class="ph ph-calendar-blank"></i><input type="date" id="swim-date" required></div></div>
                 </div>
-                <div class="card">
-                    <div class="slots-header"><h3>Sessions</h3><div class="date-display" id="swim-display-date">Today</div></div>
-                    <div class="slots-grid" id="swim-slots"></div>
-                    <button class="btn-primary" id="swim-book-btn" disabled style="margin-top:1rem;">Review Booking</button>
+                <div class="card slots-card">
+                    <div class="slots-header"><h2>Sessions</h2><div class="date-display" id="swim-display-date">Today</div></div>
+                    <div id="swim-morning-slots" class="slots-grid"></div>
+                    <div id="swim-afternoon-slots" class="slots-grid"></div>
+                    <div id="swim-evening-slots" class="slots-grid"></div>
+                    <button class="btn-primary" id="swim-book-btn-mobile" disabled>Review Booking</button>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 
+    <!-- Modals (Simplified) -->
     <div class="modal-overlay" id="confirm-modal">
         <div class="modal">
             <h3>Confirm</h3>
-            <div id="confirm-details" class="confirm-details-card"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="document.getElementById('confirm-modal').classList.remove('active')">Edit</button>
-                <button class="btn-confirm" id="final-confirm-btn">Confirm</button>
-            </div>
+            <div id="confirm-details"></div>
+            <button class="btn-confirm" id="final-confirm-btn">Confirm</button>
+            <button class="btn-cancel" onclick="closeModal('confirm-modal')">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="qr-modal">
+        <div class="modal">
+            <h3>Payment</h3>
+            <p id="qr-price"></p>
+            <img id="qr-image" style="width:100%; border-radius:10px;">
+            <input type="text" id="utr-input" placeholder="UTR Number" maxlength="12">
+            <button class="btn-confirm" id="verify-btn" disabled>Verify</button>
+            <button id="venue-btn">Pay at Venue</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="ticket-modal">
         <div class="modal">
-            <h2 style="color:#10b981">Success!</h2>
-            <p>Your booking is confirmed.</p>
-            <div style="background:#f1f5f9; padding:1rem; border-radius:10px; margin:1rem 0; font-family:monospace; font-weight:700;" id="final-id"></div>
-            <button class="btn-confirm" onclick="location.reload()" style="width:100%; background:#10b981">Done</button>
+            <h2>Success!</h2>
+            <div id="final-id"></div>
+            <button onclick="location.reload()">Done</button>
         </div>
     </div>
 
-    <script>
-        // INLINED app.js (Simplified for Mobile)
-        let currentService = 'turf';
-        let selectedSlot = null;
-        let bookings = JSON.parse(localStorage.getItem('turf_bookings') || '[]');
-
-        function showView(view) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.getElementById(view + '-view').classList.add('active');
-            currentService = view;
-            if (view !== 'landing') initSlots();
-        }
-
-        const turfSlots = ['11:30 AM', '12:30 PM', '01:30 PM', '02:30 PM', '03:30 PM', '04:30 PM', '05:30 PM', '06:30 PM', '07:30 PM', '08:30 PM', '09:30 PM', '10:30 PM', '11:30 PM'];
-        const swimSlots = ['07:00 AM', '09:00 AM', '11:00 AM', '03:00 PM', '05:00 PM', '07:00 PM', '08:00 PM'];
-
-        const tDate = document.getElementById('turf-date');
-        const sDate = document.getElementById('swim-date');
-        const today = new Date().toISOString().split('T')[0];
-        tDate.value = sDate.value = today;
-        tDate.min = sDate.min = today;
-
-        function initSlots() {
-            const container = document.getElementById(currentService + '-slots');
-            container.innerHTML = '';
-            const date = currentService === 'turf' ? tDate.value : sDate.value;
-            const data = currentService === 'turf' ? turfSlots : swimSlots;
-            const booked = bookings.filter(b => b.date === date && b.type === currentService).map(b => b.time);
-
-            data.forEach(time => {
-                const isBooked = booked.includes(time);
-                const btn = document.createElement('button');
-                btn.className = 'slot-btn' + (isBooked ? ' booked' : '');
-                btn.disabled = isBooked;
-                btn.innerHTML = `<span class="slot-time">${time}</span><span class="slot-price">${isBooked ? 'Full' : (currentService==='turf'?'₹600':'₹100/p')}</span>`;
-                btn.onclick = () => {
-                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    selectedSlot = time;
-                    document.getElementById(currentService + '-book-btn').disabled = false;
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        tDate.onchange = sDate.onchange = initSlots;
-
-        document.getElementById('turf-book-btn').onclick = document.getElementById('swim-book-btn').onclick = () => {
-            const name = document.getElementById(currentService + '-name').value;
-            const phone = document.getElementById(currentService + '-whatsapp').value || 'N/A';
-            const date = currentService === 'turf' ? tDate.value : sDate.value;
-            const price = currentService === 'turf' ? '₹600' : '₹' + (document.getElementById('swim-people').value * 100);
-            
-            document.getElementById('confirm-details').innerHTML = `
-                <div class="confirm-row"><b>Name:</b> ${name}</div>
-                <div class="confirm-row"><b>Date:</b> ${date}</div>
-                <div class="confirm-row"><b>Time:</b> ${selectedSlot}</div>
-                <div class="confirm-row"><b>Total:</b> ${price}</div>
-            `;
-            document.getElementById('confirm-modal').classList.add('active');
-            document.getElementById('confirm-modal').dataset.price = price;
-        };
-
-        document.getElementById('final-confirm-btn').onclick = () => {
-            const id = currentService.toUpperCase().substring(0,1) + Math.random().toString(36).substring(7).toUpperCase();
-            const newB = {
-                id, type: currentService,
-                name: document.getElementById(currentService + '-name').value,
-                date: currentService === 'turf' ? tDate.value : sDate.value,
-                time: selectedSlot,
-                price: document.getElementById('confirm-modal').dataset.price,
-                status: 'confirmed'
-            };
-            bookings.push(newB);
-            localStorage.setItem('turf_bookings', JSON.stringify(bookings));
-            document.getElementById('confirm-modal').classList.remove('active');
-            document.getElementById('final-id').textContent = id;
-            document.getElementById('ticket-modal').classList.add('active');
-        };
-
-        // HIDDEN LOGO CLICK LOGIC
-        let clicks = 0;
-        function logoClick() {
-            clicks++;
-            if (clicks >= 5) {
-                window.location.href = "admin.html";
-            }
-            setTimeout(() => { clicks = 0; }, 3000);
-        }
-    </script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
