@@ -54,9 +54,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // VIEW SWITCHER
     window.showView = (viewName) => {
         Object.values(views).forEach(v => v.classList.remove('active'));
-        if (views[viewName]) views[viewName].classList.add('active');
+        
+        let targetView = viewName;
+        if (viewName.startsWith('turf')) targetView = 'turf';
+        
+        if (views[targetView]) views[targetView].classList.add('active');
         currentService = viewName;
-        if (viewName === 'turf' || viewName === 'swimming') {
+        
+        // Update header text
+        if (viewName === 'turf1') {
+            document.querySelector('#turf-view h1').textContent = 'K6 Turf 1';
+            document.body.className = 'turf-theme';
+        } else if (viewName === 'turf2') {
+            document.querySelector('#turf-view h1').textContent = 'K6 Turf 2';
+            document.body.className = 'turf-theme'; // Maybe a different theme?
+        }
+        
+        if (targetView === 'turf' || viewName === 'swimming') {
             initBookingPage();
         }
     };
@@ -104,9 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initBookingPage() {
-        const date = currentService === 'turf' ? turfDateInput.value : swimDateInput.value;
-        const rawSlots = currentService === 'turf' ? (JSON.parse(localStorage.getItem('k6_tslots')) || DEFAULT_TSLOTS) : (JSON.parse(localStorage.getItem('k6_sslots')) || DEFAULT_SSLOTS);
-        const containers = currentService === 'turf' ? turfSlots : swimSlots;
+        const date = currentService.startsWith('turf') ? turfDateInput.value : swimDateInput.value;
+        const rawSlots = currentService.startsWith('turf') ? (JSON.parse(localStorage.getItem('k6_tslots')) || DEFAULT_TSLOTS) : (JSON.parse(localStorage.getItem('k6_sslots')) || DEFAULT_SSLOTS);
+        const containers = currentService.startsWith('turf') ? turfSlots : swimSlots;
         
         const bookedEntries = allBookings.filter(b => b.date === date && b.type === currentService && b.status !== 'cancelled');
         const bookedTimes = bookedEntries.map(b => b.time);
@@ -125,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.className = `slot-btn ${isBooked ? 'booked' : ''}`;
             if (isBooked) btn.disabled = true;
             
-            const price = currentService === 'turf' ? getTurfPrice(time) : '₹100/p';
+            const price = currentService.startsWith('turf') ? getTurfPrice(time) : '₹100/p';
             btn.innerHTML = `<span class="slot-time">${time}</span><span class="slot-price">${isBooked ? 'Full' : price}</span>`;
             
             if (!isBooked) {
@@ -143,22 +157,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getTurfPrice(time) {
-        if (time.includes('04:30')) return '₹600';
-        if (time.includes('05:') || time.includes('06:') || time.includes('07:') || time.includes('08:') || time.includes('09:') || time.includes('10:') || time.includes('11:')) return '₹700';
+        let isNight = false;
+        const startPart = time.split(' - ')[0];
+        const minutes = timeToMinutes(startPart);
+        
+        // Night starts from 6:00 PM (1080 minutes)
+        // We also check for 12:00 AM as it's night
+        if (minutes >= 1080 || startPart.includes('12:00 AM') || startPart.includes('01:00 AM') || startPart.includes('02:00 AM')) {
+            isNight = true;
+        }
+
+        if (currentService === 'turf1') {
+            return isNight ? '₹650' : '₹450';
+        } else if (currentService === 'turf2') {
+            return isNight ? '₹700' : '₹500';
+        }
         return '₹500';
     }
 
     function updateButtonStates() {
-        const btnDesktop = currentService === 'turf' ? document.getElementById('turf-book-btn-desktop') : document.getElementById('swim-book-btn-desktop');
-        const btnMobile = currentService === 'turf' ? document.getElementById('turf-book-btn-mobile') : document.getElementById('swim-book-btn-mobile');
+        const btnDesktop = currentService.startsWith('turf') ? document.getElementById('turf-book-btn-desktop') : document.getElementById('swim-book-btn-desktop');
+        const btnMobile = currentService.startsWith('turf') ? document.getElementById('turf-book-btn-mobile') : document.getElementById('swim-book-btn-mobile');
         
         let isDisabled = !selectedSlot;
         let overlapError = false;
 
-        if (selectedSlot && currentService === 'turf') {
+        if (selectedSlot && currentService.startsWith('turf')) {
             const date = turfDateInput.value;
             const duration = parseFloat(document.getElementById('turf-duration').value);
-            const activeBookings = allBookings.filter(b => b.date === date && b.type === 'turf' && b.status !== 'cancelled');
+            const activeBookings = allBookings.filter(b => b.date === date && b.type === currentService && b.status !== 'cancelled');
             
             overlapError = activeBookings.some(b => {
                 if (b.time === 'Full Day') return true;
@@ -181,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     subtitle.style.color = '#ef4444';
                 } else if (selectedSlot) {
                     subtitle.style.color = '';
-                    if (currentService === 'turf') {
+                    if (currentService.startsWith('turf')) {
                         const duration = parseFloat(document.getElementById('turf-duration').value);
                         const basePrice = parseInt(selectedSlot.price.replace('₹', ''));
                         subtitle.textContent = `Slot: ${selectedSlot.time} (${duration}h) - ₹${basePrice * duration}`;
@@ -204,22 +231,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 if (!selectedSlot) return;
                 
-                const name = currentService === 'turf' ? document.getElementById('turf-name').value : document.getElementById('swim-name').value;
-                const phone = currentService === 'turf' ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value;
-                const duration = currentService === 'turf' ? parseFloat(document.getElementById('turf-duration').value) : 1;
+                const name = currentService.startsWith('turf') ? document.getElementById('turf-name').value : document.getElementById('swim-name').value;
+                const phone = currentService.startsWith('turf') ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value;
+                const duration = currentService.startsWith('turf') ? parseFloat(document.getElementById('turf-duration').value) : 1;
                 
                 const extra = currentService === 'swimming' ? `<div class="confirm-row"><i class="ph-fill ph-users"></i><span><strong>People:</strong> ${swimPeopleInput.value}</span></div>` : '';
-                const playtimeRow = currentService === 'turf' ? `<div class="confirm-row"><i class="ph-fill ph-hourglass"></i><span><strong>Playtime:</strong> ${duration} Hour(s)</span></div>` : '';
+                const playtimeRow = currentService.startsWith('turf') ? `<div class="confirm-row"><i class="ph-fill ph-hourglass"></i><span><strong>Playtime:</strong> ${duration} Hour(s)</span></div>` : '';
                 
                 const basePrice = parseInt(selectedSlot.price.replace('₹', ''));
-                const priceVal = currentService === 'turf' ? `₹${basePrice * duration}` : `₹${parseInt(swimPeopleInput.value) * 100}`;
+                const priceVal = currentService.startsWith('turf') ? `₹${basePrice * duration}` : `₹${parseInt(swimPeopleInput.value) * 100}`;
 
                 document.getElementById('confirm-details').innerHTML = `
                     <div class="confirm-row"><i class="ph-fill ph-user"></i><span><strong>Name:</strong> ${name}</span></div>
                     <div class="confirm-row"><i class="ph-fill ph-whatsapp-logo"></i><span><strong>Phone:</strong> ${phone}</span></div>
                     ${extra}
                     ${playtimeRow}
-                    <div class="confirm-row"><i class="ph-fill ph-calendar"></i><span><strong>Date:</strong> ${currentService === 'turf' ? turfDateInput.value : swimDateInput.value}</span></div>
+                    <div class="confirm-row"><i class="ph-fill ph-calendar"></i><span><strong>Date:</strong> ${currentService.startsWith('turf') ? turfDateInput.value : swimDateInput.value}</span></div>
                     <div class="confirm-row"><i class="ph-fill ph-clock"></i><span><strong>Time:</strong> ${selectedSlot.time}</span></div>
                     <div class="confirm-row"><i class="ph-fill ph-tag"></i><span><strong>Total:</strong> <strong class="price-highlight">${priceVal}</strong></span></div>
                 `;
@@ -250,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const finalizeBooking = async (utr) => {
         if (!selectedSlot) return alert("Please select a slot first.");
-        const date = currentService === 'turf' ? turfDateInput.value : swimDateInput.value;
+        const date = currentService.startsWith('turf') ? turfDateInput.value : swimDateInput.value;
         
         try {
             // SIMPLE QUERY (Avoids indexing errors)
@@ -266,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const alreadyBooked = activeBookings.some(b => {
                 if (b.time === 'Full Day') return true;
-                const requestedDuration = currentService === 'turf' ? parseFloat(document.getElementById('turf-duration').value) : 1;
+                const requestedDuration = currentService.startsWith('turf') ? parseFloat(document.getElementById('turf-duration').value) : 1;
                 return isOverlapping(selectedSlot.time, b.time, b.duration || 1) || 
                        isOverlapping(b.time, selectedSlot.time, requestedDuration);
             });
@@ -282,8 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 bookingId: id, 
                 type: currentService, 
                 utr,
-                name: currentService === 'turf' ? document.getElementById('turf-name').value : document.getElementById('swim-name').value,
-                whatsapp: currentService === 'turf' ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value,
+                name: currentService.startsWith('turf') ? document.getElementById('turf-name').value : document.getElementById('swim-name').value,
+                whatsapp: currentService.startsWith('turf') ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value,
                 date: date,
                 time: selectedSlot.time,
                 duration: confirmModal.dataset.duration || 1,

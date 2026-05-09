@@ -188,7 +188,7 @@
         <div id="sch-tab" class="content">
             <div class="card" style="margin-bottom:24px;">
                 <div style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
-                    <div class="form-g" style="margin:0; flex:1; min-width:150px;"><label>Service Type</label><select id="stype"><option value="turf">Turf Only</option><option value="swimming">Swimming Pool</option></select></div>
+                    <div class="form-g" style="margin:0; flex:1; min-width:150px;"><label>Service Type</label><select id="stype"><option value="turf1">Turf 1 Only</option><option value="turf2">Turf 2 Only</option><option value="swimming">Swimming Pool</option></select></div>
                     <div class="form-g" style="margin:0; flex:1; min-width:150px;"><label>Select Date</label><input type="date" id="sdate"></div>
                     <button class="btn btn-p" onclick="showSch()" style="flex:1;">Show Slots</button>
                     <button class="btn btn-s" onclick="openNew()" style="flex:1;">Manual Entry</button>
@@ -229,7 +229,7 @@
             </div>
             <form id="mform">
                 <input type="hidden" id="mid">
-                <div class="form-g"><label>Service</label><select id="mtype"><option value="turf">Turf</option><option value="swimming">Swimming</option></select></div>
+                <div class="form-g"><label>Service</label><select id="mtype"><option value="turf1">Turf 1</option><option value="turf2">Turf 2</option><option value="swimming">Swimming</option></select></div>
                 <div style="display:flex; gap:12px;">
                     <div class="form-g" style="flex:1;"><label>Date</label><input type="date" id="mdate" required onchange="updateAvailableSlots()"></div>
                     <div class="form-g" style="flex:1;"><label>Time Slot</label><select id="mtime" required></select></div>

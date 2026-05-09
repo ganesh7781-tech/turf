@@ -122,7 +122,7 @@ window.editB = (id) => {
     const b = allBookings.find(x => x.id === id);
     if (!b) return;
     document.getElementById('mid').value = b.id;
-    document.getElementById('mtype').value = b.type || 'turf';
+    document.getElementById('mtype').value = b.type || 'turf1';
     document.getElementById('mdate').value = b.date;
     document.getElementById('mtime').setAttribute('data-val', b.time); 
     document.getElementById('mname').value = b.name;
@@ -167,10 +167,10 @@ window.showSch = () => {
     
     const [y,m,d] = date.split('-');
     document.getElementById('sdisplay').textContent = new Date(y, m-1, d).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
-    document.getElementById('stitle').textContent = type === 'turf' ? "TURF SLOTS" : "SWIMMING SLOTS";
+    document.getElementById('stitle').textContent = type.startsWith('turf') ? (type === 'turf1' ? "TURF 1 SLOTS" : "TURF 2 SLOTS") : "SWIMMING SLOTS";
     
     const booked = allBookings.filter(b => b.date===date && b.type===type && b.status!=='cancelled');
-    const slots = type==='turf' ? TSLOTS : SSLOTS;
+    const slots = type.startsWith('turf') ? TSLOTS : SSLOTS;
     const grid = document.getElementById('sgrid');
     grid.innerHTML = '';
     
@@ -186,18 +186,18 @@ window.showSch = () => {
         
         const div = document.createElement('div');
         let status = 'available';
-        if (type === 'turf' && bList.length > 0) { status = 'booked'; bookedCount++; }
+        if (type.startsWith('turf') && bList.length > 0) { status = 'booked'; bookedCount++; }
         if (type === 'swimming' && totalP >= 50) { status = 'full'; bookedCount++; }
         
         div.className = 'slot ' + status;
         let info = '';
-        if (type === 'turf') {
+        if (type.startsWith('turf')) {
             info = bList.length > 0 ? `<span style="color:#ef4444;">${bList[0].name}</span>` : `<span style="color:var(--primary);">Available</span>`;
         } else {
             info = `<span style="${totalP >= 50 ? 'color:#ef4444' : 'color:var(--primary)'}">${totalP}/50 People</span>`;
         }
         
-        const price = type==='turf' ? (getP(s)) : 100;
+        const price = type.startsWith('turf') ? (getP(s, type)) : 100;
         div.innerHTML = `<span class="slot-time">${s}</span><div class="slot-info">${info}</div><div class="slot-price">₹${price}${type==='swimming'?'/p':''}</div>`;
         
         if(status !== 'full' && (type==='swimming' || status==='available')) {
@@ -212,7 +212,7 @@ window.showSch = () => {
 
 window.manageSlots = () => {
     const type = document.getElementById('stype').value;
-    const slots = type === 'turf' ? TSLOTS : SSLOTS;
+    const slots = type.startsWith('turf') ? TSLOTS : SSLOTS;
     const list = document.getElementById('slot-list');
     list.innerHTML = '';
     slots.forEach((s, i) => {
@@ -226,7 +226,7 @@ window.manageSlots = () => {
 
 window.deleteSlot = (index) => {
     const type = document.getElementById('stype').value;
-    if (type === 'turf') { TSLOTS.splice(index, 1); localStorage.setItem('k6_tslots', JSON.stringify(TSLOTS)); }
+    if (type.startsWith('turf')) { TSLOTS.splice(index, 1); localStorage.setItem('k6_tslots', JSON.stringify(TSLOTS)); }
     else { SSLOTS.splice(index, 1); localStorage.setItem('k6_sslots', JSON.stringify(SSLOTS)); }
     window.manageSlots(); window.showSch();
 };
@@ -235,7 +235,7 @@ window.addNewSlot = () => {
     const time = document.getElementById('new-slot-time').value;
     if (!time) return alert("Enter time");
     const type = document.getElementById('stype').value;
-    if (type === 'turf') { TSLOTS.push(time); localStorage.setItem('k6_tslots', JSON.stringify(TSLOTS)); }
+    if (type.startsWith('turf')) { TSLOTS.push(time); localStorage.setItem('k6_tslots', JSON.stringify(TSLOTS)); }
     else { SSLOTS.push(time); localStorage.setItem('k6_sslots', JSON.stringify(SSLOTS)); }
     document.getElementById('new-slot-time').value = '';
     window.manageSlots(); window.showSch();
@@ -244,7 +244,7 @@ window.addNewSlot = () => {
 window.resetSlots = () => {
     if(confirm("Reset to default slots?")) {
         const type = document.getElementById('stype').value;
-        if(type === 'turf') { TSLOTS = [...DEFAULT_TSLOTS]; localStorage.removeItem('k6_tslots'); }
+        if(type.startsWith('turf')) { TSLOTS = [...DEFAULT_TSLOTS]; localStorage.removeItem('k6_tslots'); }
         else { SSLOTS = [...DEFAULT_SSLOTS]; localStorage.removeItem('k6_sslots'); }
         window.manageSlots(); window.showSch();
     }
@@ -252,9 +252,18 @@ window.resetSlots = () => {
 
 window.closeSlotModal = () => { document.getElementById('slot-modal-bg').style.display = 'none'; };
 
-function getP(time) {
-    if (time.includes('04:30')) return 600;
-    if (time.includes('05:') || time.includes('06:') || time.includes('07:') || time.includes('08:') || time.includes('09:') || time.includes('10:') || time.includes('11:')) return 700;
+function getP(time, type) {
+    let isNight = false;
+    const startPart = time.split(' - ')[0];
+    const minutes = timeToMinutes(startPart);
+    
+    // Night starts from 6:00 PM (1080 minutes)
+    if (minutes >= 1080 || startPart.includes('12:00 AM') || startPart.includes('01:00 AM') || startPart.includes('02:00 AM')) {
+        isNight = true;
+    }
+
+    if (type === 'turf1') return isNight ? 650 : 450;
+    if (type === 'turf2') return isNight ? 700 : 500;
     return 500;
 }
 
@@ -266,10 +275,10 @@ window.updateAvailableSlots = () => {
     timeSelect.innerHTML = '';
     
     const booked = allBookings.filter(b => b.date === date && b.type === type && b.status !== 'cancelled');
-    const slots = type === 'turf' ? [...TSLOTS, 'Full Day'] : SSLOTS;
+    const slots = type.startsWith('turf') ? [...TSLOTS, 'Full Day'] : SSLOTS;
     
     slots.forEach(s => {
-        const isBooked = type === 'turf' && booked.some(b => {
+        const isBooked = type.startsWith('turf') && booked.some(b => {
             if (b.time === 'Full Day') return true;
             return isOverlapping(s, b.time, b.duration || 1);
         });
@@ -285,7 +294,7 @@ window.updateAvailableSlots = () => {
 
 function toggleMFields() {
     const type = document.getElementById('mtype').value;
-    document.getElementById('mdur-g').style.display = type === 'turf' ? 'flex' : 'none';
+    document.getElementById('mdur-g').style.display = type.startsWith('turf') ? 'flex' : 'none';
     document.getElementById('mcount-g').style.display = type === 'swimming' ? 'block' : 'none';
     window.updateAvailableSlots();
 }
@@ -307,8 +316,8 @@ function openM(s, type, date, p) {
 
 window.openNew = () => { 
     const date = document.getElementById('sdate').value || new Date().toISOString().split('T')[0];
-    const type = document.getElementById('stype').value || 'turf';
-    openM('', type, date, type==='turf'?700:100); 
+    const type = document.getElementById('stype').value || 'turf1';
+    openM('', type, date, type.startsWith('turf')?getP('', type):100); 
 };
 
 window.closeModal = () => { document.getElementById('mbg').style.display = 'none'; };
@@ -325,7 +334,7 @@ document.getElementById('mform').onsubmit = async (e) => {
         time: document.getElementById('mtime').value,
         price: '₹' + document.getElementById('mprice').value,
         payMode: document.getElementById('mpay').value,
-        duration: type === 'turf' ? (document.getElementById('mdur').value === 'full' ? 'full' : parseFloat(document.getElementById('mdur').value)) : 1,
+        duration: type.startsWith('turf') ? (document.getElementById('mdur').value === 'full' ? 'full' : parseFloat(document.getElementById('mdur').value)) : 1,
         count: type === 'swimming' ? document.getElementById('mcount').value : 1,
         timestamp: new Date().toISOString(),
         status: 'confirmed',

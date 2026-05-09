@@ -57,10 +57,10 @@ h1, h2, h3, h4 {
 .app-header {
     text-align: center;
     margin-bottom: 2rem;
-    padding: 2rem 1.5rem;
+    padding: 2.5rem 1.5rem;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
     color: white;
-    border-radius: var(--radius-lg);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     box-shadow: var(--shadow-lg);
 }
 
@@ -285,8 +285,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .slots-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.75rem;
+}
+@media (max-width: 400px) {
+    .slots-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .slot-btn {
@@ -562,21 +567,43 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         padding: 1.25rem;
     }
 
-    /* Landing Page Mobile */
-    .landing-container {
-        padding: 1rem;
+    .app-header {
+        padding: 2rem 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0;
     }
-    
-    .choice-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+
+    .app-header h1 {
+        font-size: 1.5rem;
     }
-    
-    .card-image {
-        height: 150px;
+
+    .section-title {
+        font-size: 0.9rem;
     }
+
+    .slot-btn {
+        padding: 1rem 0.5rem;
+    }
+
+    .slot-time {
+        font-size: 0.8rem;
+    }
+
+    .slot-price {
+        font-size: 0.85rem;
+    }
+
     .mobile-bottom-action {
         display: block;
+        padding: 0.75rem;
+    }
+
+    .floating-help-btn {
+        bottom: 5.5rem; /* Move up to avoid overlap with sticky button */
+        right: 1rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
     }
 }
 
