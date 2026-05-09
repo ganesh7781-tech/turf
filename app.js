@@ -78,6 +78,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'night';
     }
 
+    function timeToMinutes(timeStr) {
+        if (!timeStr) return 0;
+        let [time, modifier] = timeStr.trim().split(' ');
+        let [hours, minutes] = time.split(':').map(Number);
+        if (hours === 12) {
+            hours = modifier === 'AM' ? 0 : 12;
+        } else if (modifier === 'PM') {
+            hours += 12;
+        }
+        return hours * 60 + (minutes || 0);
+    }
+
+    function isOverlapping(slotRange, bookingTime, bookingDuration) {
+        let slotStart = timeToMinutes(slotRange.split(' - ')[0]);
+        let slotEnd = timeToMinutes(slotRange.split(' - ')[1]);
+        if (slotEnd <= slotStart) slotEnd += 1440; // Handle midnight transition
+        
+        let bookingStart = timeToMinutes(bookingTime.split(' - ')[0]);
+        let bookingEnd = bookingStart + (parseFloat(bookingDuration) * 60);
+        
+        // Overlap occurs if:
+        // (slotStart < bookingEnd) AND (slotEnd > bookingStart)
+        return slotStart < bookingEnd && slotEnd > bookingStart;
+    }
+
     function initBookingPage() {
         const date = currentService === 'turf' ? turfDateInput.value : swimDateInput.value;
         const rawSlots = currentService === 'turf' ? (JSON.parse(localStorage.getItem('k6_tslots')) || DEFAULT_TSLOTS) : (JSON.parse(localStorage.getItem('k6_sslots')) || DEFAULT_SSLOTS);
@@ -91,7 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.values(containers).forEach(c => { if(c) c.innerHTML = ''; });
 
         rawSlots.forEach(time => {
-            const isBooked = bookedTimes.includes(time) || isFullDay;
+            const isBooked = bookedEntries.some(b => {
+                if (b.time === 'Full Day') return true;
+                return isOverlapping(time, b.time, b.duration || 1);
+            });
+
             const btn = document.createElement('button');
             btn.className = `slot-btn ${isBooked ? 'booked' : ''}`;
             if (isBooked) btn.disabled = true;
@@ -123,13 +152,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnDesktop = currentService === 'turf' ? document.getElementById('turf-book-btn-desktop') : document.getElementById('swim-book-btn-desktop');
         const btnMobile = currentService === 'turf' ? document.getElementById('turf-book-btn-mobile') : document.getElementById('swim-book-btn-mobile');
         
-        const isDisabled = !selectedSlot;
+        let isDisabled = !selectedSlot;
+        let overlapError = false;
+
+        if (selectedSlot && currentService === 'turf') {
+            const date = turfDateInput.value;
+            const duration = parseFloat(document.getElementById('turf-duration').value);
+            const activeBookings = allBookings.filter(b => b.date === date && b.type === 'turf' && b.status !== 'cancelled');
+            
+            overlapError = activeBookings.some(b => {
+                if (b.time === 'Full Day') return true;
+                // isOverlapping(slot, existingBooking, existingDuration)
+                // We check if our selected start slot overlaps with an existing booking
+                // AND if any existing booking starts within our requested duration
+                return isOverlapping(selectedSlot.time, b.time, b.duration || 1) || 
+                       isOverlapping(b.time, selectedSlot.time, duration);
+            });
+            if (overlapError) isDisabled = true;
+        }
+
         if (btnDesktop) btnDesktop.disabled = isDisabled;
         if (btnMobile) {
             btnMobile.disabled = isDisabled;
             const subtitle = btnMobile.querySelector('.btn-subtitle');
             if (subtitle) {
-                subtitle.textContent = selectedSlot ? `Slot: ${selectedSlot.time}` : 'Select a slot to proceed';
+                if (overlapError) {
+                    subtitle.textContent = '❌ Time range overlaps existing booking';
+                    subtitle.style.color = '#ef4444';
+                } else if (selectedSlot) {
+                    subtitle.style.color = '';
+                    if (currentService === 'turf') {
+                        const duration = parseFloat(document.getElementById('turf-duration').value);
+                        const basePrice = parseInt(selectedSlot.price.replace('₹', ''));
+                        subtitle.textContent = `Slot: ${selectedSlot.time} (${duration}h) - ₹${basePrice * duration}`;
+                    } else {
+                        const people = parseInt(document.getElementById('swim-people').value);
+                        subtitle.textContent = `Slot: ${selectedSlot.time} (${people} People) - ₹${people * 100}`;
+                    }
+                } else {
+                    subtitle.style.color = '';
+                    subtitle.textContent = 'Select a slot to proceed';
+                }
             }
         }
     }
@@ -143,17 +206,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const name = currentService === 'turf' ? document.getElementById('turf-name').value : document.getElementById('swim-name').value;
                 const phone = currentService === 'turf' ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value;
+                const duration = currentService === 'turf' ? parseFloat(document.getElementById('turf-duration').value) : 1;
+                
                 const extra = currentService === 'swimming' ? `<div class="confirm-row"><i class="ph-fill ph-users"></i><span><strong>People:</strong> ${swimPeopleInput.value}</span></div>` : '';
-                const priceVal = currentService === 'turf' ? selectedSlot.price : `₹${parseInt(swimPeopleInput.value) * 100}`;
+                const playtimeRow = currentService === 'turf' ? `<div class="confirm-row"><i class="ph-fill ph-hourglass"></i><span><strong>Playtime:</strong> ${duration} Hour(s)</span></div>` : '';
+                
+                const basePrice = parseInt(selectedSlot.price.replace('₹', ''));
+                const priceVal = currentService === 'turf' ? `₹${basePrice * duration}` : `₹${parseInt(swimPeopleInput.value) * 100}`;
 
                 document.getElementById('confirm-details').innerHTML = `
                     <div class="confirm-row"><i class="ph-fill ph-user"></i><span><strong>Name:</strong> ${name}</span></div>
+                    <div class="confirm-row"><i class="ph-fill ph-whatsapp-logo"></i><span><strong>Phone:</strong> ${phone}</span></div>
                     ${extra}
+                    ${playtimeRow}
                     <div class="confirm-row"><i class="ph-fill ph-calendar"></i><span><strong>Date:</strong> ${currentService === 'turf' ? turfDateInput.value : swimDateInput.value}</span></div>
                     <div class="confirm-row"><i class="ph-fill ph-clock"></i><span><strong>Time:</strong> ${selectedSlot.time}</span></div>
                     <div class="confirm-row"><i class="ph-fill ph-tag"></i><span><strong>Total:</strong> <strong class="price-highlight">${priceVal}</strong></span></div>
                 `;
                 confirmModal.dataset.finalPrice = priceVal;
+                confirmModal.dataset.duration = duration;
                 confirmModal.classList.add('active');
             };
         }
@@ -193,11 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Filter non-cancelled bookings in memory
             const activeBookings = latestBookings.filter(b => b.status !== 'cancelled');
             
-            const alreadyBooked = activeBookings.some(b => b.time === selectedSlot.time);
-            const isFullDay = activeBookings.some(b => b.time === 'Full Day');
+            const alreadyBooked = activeBookings.some(b => {
+                if (b.time === 'Full Day') return true;
+                const requestedDuration = currentService === 'turf' ? parseFloat(document.getElementById('turf-duration').value) : 1;
+                return isOverlapping(selectedSlot.time, b.time, b.duration || 1) || 
+                       isOverlapping(b.time, selectedSlot.time, requestedDuration);
+            });
 
-            if (alreadyBooked || isFullDay) {
-                alert("Sorry, this slot was just booked by someone else. Please select another slot.");
+            if (alreadyBooked) {
+                alert("Sorry, your selected time range overlaps with an existing booking. Please select another slot.");
                 location.reload();
                 return;
             }
@@ -211,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 whatsapp: currentService === 'turf' ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value,
                 date: date,
                 time: selectedSlot.time,
+                duration: confirmModal.dataset.duration || 1,
                 price: confirmModal.dataset.finalPrice,
                 status: utr === 'Pay at Venue' ? 'confirmed' : 'pending',
                 timestamp: new Date().toISOString(),
@@ -232,13 +308,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const venueBtn = document.getElementById('venue-btn');
     if (venueBtn) venueBtn.onclick = () => finalizeBooking('Pay at Venue');
 
-    // RE-INIT ON DATE CHANGE
-    [turfDateInput, swimDateInput].forEach(inp => {
+    // RE-INIT ON DATE/DURATION/PEOPLE CHANGE
+    [turfDateInput, swimDateInput, document.getElementById('turf-duration'), document.getElementById('swim-people')].forEach(inp => {
         if (inp) {
-            inp.onchange = () => {
-                selectedSlot = null;
-                initBookingPage();
-            };
+            const eventType = inp.tagName === 'INPUT' && inp.type === 'number' ? 'input' : 'change';
+            inp.addEventListener(eventType, () => {
+                if (inp.id === 'turf-date' || inp.id === 'swim-date') {
+                    selectedSlot = null;
+                    initBookingPage();
+                } else {
+                    updateButtonStates();
+                }
+            });
         }
     });
 

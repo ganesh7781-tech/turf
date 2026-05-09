@@ -10,6 +10,32 @@ let SSLOTS = JSON.parse(localStorage.getItem('k6_sslots')) || [...DEFAULT_SSLOTS
 let bp = 700;
 let allBookings = [];
 
+function timeToMinutes(timeStr) {
+    if (!timeStr || timeStr === 'Full Day') return 0;
+    let parts = timeStr.trim().split(' ');
+    if (parts.length < 2) return 0;
+    let [time, modifier] = parts;
+    let [hours, minutes] = time.split(':').map(Number);
+    if (hours === 12) {
+        hours = modifier === 'AM' ? 0 : 12;
+    } else if (modifier === 'PM') {
+        hours += 12;
+    }
+    return hours * 60 + (minutes || 0);
+}
+
+function isOverlapping(slotRange, bookingTime, bookingDuration) {
+    if (bookingTime === 'Full Day' || slotRange === 'Full Day') return true;
+    let slotStart = timeToMinutes(slotRange.split(' - ')[0]);
+    let slotEnd = timeToMinutes(slotRange.split(' - ')[1]);
+    if (slotEnd <= slotStart) slotEnd += 1440; 
+    
+    let bookingStart = timeToMinutes(bookingTime.split(' - ')[0]);
+    let bookingEnd = bookingStart + (parseFloat(bookingDuration) * 60);
+    
+    return slotStart < bookingEnd && slotEnd > bookingStart;
+}
+
 // ATTACH FUNCTIONS TO WINDOW FOR HTML CALLS
 window.doLogin = () => {
     if (document.getElementById('pw').value === 'k6admin') {
@@ -104,6 +130,7 @@ window.editB = (id) => {
     document.getElementById('mprice').value = (b.price||'').replace(/[^0-9]/g, '');
     document.getElementById('mpay').value = b.payMode || 'Cash';
     document.getElementById('mcount').value = b.count || 1;
+    document.getElementById('mdur').value = b.duration || 1;
     document.getElementById('mtitle').textContent = "Edit Booking";
     toggleMFields();
     document.getElementById('mbg').style.display = 'flex';
@@ -151,7 +178,10 @@ window.showSch = () => {
     let totalSlots = slots.length;
 
     slots.forEach(s => {
-        const bList = booked.filter(x => x.time===s || x.time === 'Full Day');
+        const bList = booked.filter(x => {
+            if (x.time === 'Full Day') return true;
+            return isOverlapping(s, x.time, x.duration || 1);
+        });
         let totalP = 0; bList.forEach(x => totalP += parseInt(x.count || 1));
         
         const div = document.createElement('div');
@@ -239,7 +269,10 @@ window.updateAvailableSlots = () => {
     const slots = type === 'turf' ? [...TSLOTS, 'Full Day'] : SSLOTS;
     
     slots.forEach(s => {
-        const isBooked = type === 'turf' && (booked.some(b => b.time === s) || booked.some(b => b.time === 'Full Day'));
+        const isBooked = type === 'turf' && booked.some(b => {
+            if (b.time === 'Full Day') return true;
+            return isOverlapping(s, b.time, b.duration || 1);
+        });
         if (!isBooked || s === currentVal) {
             const opt = document.createElement('option');
             opt.value = s;
@@ -292,6 +325,7 @@ document.getElementById('mform').onsubmit = async (e) => {
         time: document.getElementById('mtime').value,
         price: '₹' + document.getElementById('mprice').value,
         payMode: document.getElementById('mpay').value,
+        duration: type === 'turf' ? (document.getElementById('mdur').value === 'full' ? 'full' : parseFloat(document.getElementById('mdur').value)) : 1,
         count: type === 'swimming' ? document.getElementById('mcount').value : 1,
         timestamp: new Date().toISOString(),
         status: 'confirmed',

@@ -237,7 +237,16 @@
                 <div class="form-g"><label>Customer Name</label><input type="text" id="mname" required placeholder="Full Name"></div>
                 <div class="form-g"><label>WhatsApp Number</label><input type="tel" id="mphone" required placeholder="98765 43210"></div>
                 <div style="display:flex; gap:12px;" id="mdur-g">
-                    <div class="form-g" style="flex:1;"><label>Duration</label><select id="mdur"><option value="1">1 Hour</option><option value="1.5">1.5 Hours</option><option value="2">2 Hours</option><option value="full">Full Day</option></select></div>
+                    <div class="form-g" style="flex:1;"><label>Duration</label><select id="mdur">
+                        <option value="1">1 Hour</option>
+                        <option value="1.5">1.5 Hours</option>
+                        <option value="2">2 Hours</option>
+                        <option value="2.5">2.5 Hours</option>
+                        <option value="3">3 Hours</option>
+                        <option value="4">4 Hours</option>
+                        <option value="5">5 Hours</option>
+                        <option value="full">Full Day</option>
+                    </select></div>
                     <div class="form-g" style="flex:1;"><label>Payment</label><select id="mpay"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Pending">Pending</option></select></div>
                 </div>
                 <div id="mcount-g" class="form-g" style="display:none;"><label>Number of Persons</label><input type="number" id="mcount" value="1" min="1" max="50"></div>
