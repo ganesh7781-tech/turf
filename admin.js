@@ -2,7 +2,7 @@ import { db, collection, addDoc, onSnapshot, query, where, orderBy, updateDoc, d
 
 window.onerror = function(m, u, l) { alert("Admin Pro Error: " + m); return false; };
 
-const DEFAULT_TSLOTS = ['11:30 AM - 12:30 PM', '12:00 PM - 01:00 PM', '01:00 PM - 02:00 PM', '02:00 PM - 03:00 PM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM', '09:00 PM - 10:00 PM', '10:00 PM - 11:00 PM', '11:00 PM - 12:00 AM'];
+const DEFAULT_TSLOTS = ['07:00 AM - 09:00 AM', '09:00 AM - 11:00 AM', '11:00 AM - 12:30 PM', '12:00 PM - 01:00 PM', '01:00 PM - 02:00 PM', '02:00 PM - 03:00 PM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM', '09:00 PM - 10:00 PM', '10:00 PM - 11:00 PM', '11:00 PM - 12:00 AM', '12:00 AM - 01:00 AM'];
 const DEFAULT_SSLOTS = ['07:00 AM - 08:00 AM', '08:00 AM - 09:00 AM', '09:00 AM - 10:00 AM', '10:00 AM - 11:00 AM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM'];
 
 let TSLOTS = JSON.parse(localStorage.getItem('k6_tslots')) || [...DEFAULT_TSLOTS];

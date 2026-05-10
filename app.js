@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allBookings = [];
     
     // FETCH DYNAMIC SLOTS
-    const DEFAULT_TSLOTS = ['11:30 AM - 12:30 PM', '12:00 PM - 01:00 PM', '01:00 PM - 02:00 PM', '02:00 PM - 03:00 PM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM', '09:00 PM - 10:00 PM', '10:00 PM - 11:00 PM', '11:00 PM - 12:00 AM'];
+    const DEFAULT_TSLOTS = ['07:00 AM - 09:00 AM', '09:00 AM - 11:00 AM', '11:00 AM - 12:30 PM', '12:00 PM - 01:00 PM', '01:00 PM - 02:00 PM', '02:00 PM - 03:00 PM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM', '09:00 PM - 10:00 PM', '10:00 PM - 11:00 PM', '11:00 PM - 12:00 AM', '12:00 AM - 01:00 AM'];
     const DEFAULT_SSLOTS = ['07:00 AM - 08:00 AM', '08:00 AM - 09:00 AM', '09:00 AM - 10:00 AM', '10:00 AM - 11:00 AM', '03:00 PM - 04:00 PM', '04:00 PM - 05:00 PM', '05:00 PM - 06:00 PM', '06:00 PM - 07:00 PM', '07:00 PM - 08:00 PM', '08:00 PM - 09:00 PM'];
     
     // DOM ELEMENTS - VIEWS
@@ -348,15 +348,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const basePrice = parseInt(selectedSlot.price.replace('₹', ''));
                 const priceVal = currentService.startsWith('turf') ? `₹${basePrice * duration}` : `₹${parseInt(swimPeopleInput.value) * 100}`;
 
+                const fullTimeRange = currentService.startsWith('turf') && selectedSlotTimes.length > 0 
+                    ? `${selectedSlotTimes[0].split(' - ')[0]} - ${selectedSlotTimes[selectedSlotTimes.length - 1].split(' - ')[1]}`
+                    : selectedSlot.time;
+
                 document.getElementById('confirm-details').innerHTML = `
                     <div class="confirm-row"><i class="ph-fill ph-user"></i><span><strong>Name:</strong> ${name}</span></div>
                     <div class="confirm-row"><i class="ph-fill ph-whatsapp-logo"></i><span><strong>Phone:</strong> ${phone}</span></div>
                     ${extra}
                     ${playtimeRow}
                     <div class="confirm-row"><i class="ph-fill ph-calendar"></i><span><strong>Date:</strong> ${currentService.startsWith('turf') ? turfDateInput.value : swimDateInput.value}</span></div>
-                    <div class="confirm-row"><i class="ph-fill ph-clock"></i><span><strong>Time:</strong> ${selectedSlot.time}</span></div>
+                    <div class="confirm-row"><i class="ph-fill ph-clock"></i><span><strong>Time:</strong> ${fullTimeRange}</span></div>
                     <div class="confirm-row"><i class="ph-fill ph-tag"></i><span><strong>Total:</strong> <strong class="price-highlight">${priceVal}</strong></span></div>
                 `;
+                confirmModal.dataset.finalTimeRange = fullTimeRange;
                 confirmModal.dataset.finalPrice = priceVal;
                 confirmModal.dataset.duration = duration;
                 confirmModal.classList.add('active');
@@ -419,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: currentService.startsWith('turf') ? document.getElementById('turf-name').value : document.getElementById('swim-name').value,
                 whatsapp: currentService.startsWith('turf') ? document.getElementById('turf-whatsapp').value : document.getElementById('swim-whatsapp').value,
                 date: date,
-                time: selectedSlot.time,
+                time: confirmModal.dataset.finalTimeRange || selectedSlot.time,
                 duration: confirmModal.dataset.duration || 1,
                 price: confirmModal.dataset.finalPrice,
                 status: utr === 'Pay at Venue' ? 'confirmed' : 'pending',
