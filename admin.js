@@ -197,11 +197,20 @@ window.showSch = () => {
             info = `<span style="${totalP >= 50 ? 'color:#ef4444' : 'color:var(--primary)'}">${totalP}/50 People</span>`;
         }
         
-        const price = type.startsWith('turf') ? (getP(s, type)) : 100;
-        div.innerHTML = `<span class="slot-time">${s}</span><div class="slot-info">${info}</div><div class="slot-price">₹${price}${type==='swimming'?'/p':''}</div>`;
+        const hourlyRate = type.startsWith('turf') ? (getP(s, type)) : 100;
+        let displayPrice = hourlyRate;
+        if (type.startsWith('turf')) {
+            const startMin = timeToMinutes(s.split(' - ')[0]);
+            let endMin = timeToMinutes(s.split(' - ')[1]);
+            if (endMin <= startMin) endMin += 1440;
+            const slotDur = (endMin - startMin) / 60;
+            displayPrice = hourlyRate * slotDur;
+        }
+
+        div.innerHTML = `<span class="slot-time">${s}</span><div class="slot-info">${info}</div><div class="slot-price">₹${displayPrice}${type==='swimming'?'/p':''}</div>`;
         
         if(status !== 'full' && (type==='swimming' || status==='available')) {
-            div.onclick = () => openM(s, type, date, price);
+            div.onclick = () => openM(s, type, date, hourlyRate);
         }
         grid.appendChild(div);
     });

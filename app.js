@@ -157,11 +157,21 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.className = `slot-btn ${isBooked ? 'booked' : ''}`;
             if (isBooked) btn.disabled = true;
             
-            const price = currentService.startsWith('turf') ? getTurfPrice(time) : '₹100/p';
-            btn.innerHTML = `<span class="slot-time">${time}</span><span class="slot-price">${isBooked ? 'Full' : price}</span>`;
+            let displayPrice = currentService.startsWith('turf') ? getTurfPrice(time) : '₹100/p';
+            if (currentService.startsWith('turf')) {
+                const startMin = timeToMinutes(time.split(' - ')[0]);
+                let endMin = timeToMinutes(time.split(' - ')[1]);
+                if (endMin <= startMin) endMin += 1440;
+                const slotDur = (endMin - startMin) / 60;
+                const hourlyRate = parseInt(displayPrice.replace('₹', ''));
+                displayPrice = `₹${hourlyRate * slotDur}`;
+            }
+
+            btn.innerHTML = `<span class="slot-time">${time}</span><span class="slot-price">${isBooked ? 'Full' : displayPrice}</span>`;
             
             if (!isBooked) {
                 btn.onclick = () => {
+                    const price = getTurfPrice(time); // Keep hourly rate for selection logic
                     if (currentService.startsWith('turf')) {
                         // Multi-slot logic for turf
                         if (selectedSlotTimes.includes(time)) {
