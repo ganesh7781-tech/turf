@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // STATE
     let currentService = 'turf'; // 'turf' or 'swimming'
     let selectedSlot = null;
+    let selectedSlotTimes = []; // Added for multiple slot selection
     let allBookings = [];
     
     // FETCH DYNAMIC SLOTS
@@ -61,19 +62,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (views[targetView]) views[targetView].classList.add('active');
         currentService = viewName;
         
+        // Reset selection when switching views
+        resetSelection();
+
         // Update header text
         if (viewName === 'turf1') {
             document.querySelector('#turf-view h1').textContent = 'K6 Turf 1';
             document.body.className = 'turf-theme';
         } else if (viewName === 'turf2') {
             document.querySelector('#turf-view h1').textContent = 'K6 Turf 2';
-            document.body.className = 'turf-theme'; // Maybe a different theme?
+            document.body.className = 'turf-theme';
         }
         
         if (targetView === 'turf' || viewName === 'swimming') {
             initBookingPage();
         }
     };
+
+    function resetSelection() {
+        selectedSlot = null;
+        selectedSlotTimes = [];
+        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+        updateButtonStates();
+    }
 
     window.closeModal = (id) => {
         const el = document.getElementById(id);
@@ -86,9 +97,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (swimDateInput) { swimDateInput.value = today; swimDateInput.min = today; }
 
     function getCategory(time) {
-        if (time.includes('AM')) return 'morning';
-        if (time.includes('12:00 PM') || time.includes('01:00 PM') || time.includes('02:00 PM') || time.includes('03:00 PM') || time.includes('04:00 PM')) return 'afternoon';
-        if (time.includes('05:00 PM') || time.includes('06:00 PM') || time.includes('07:00 PM') || time.includes('08:00 PM')) return 'evening';
+        const startPart = time.split(' - ')[0];
+        if (startPart.includes('AM')) {
+            // 12:00 AM is midnight, should be categorized as night
+            if (startPart.startsWith('12:00')) return 'night';
+            return 'morning';
+        }
+        // Afternoon: 12 PM to 4:59 PM
+        if (startPart.includes('12:00 PM') || startPart.includes('01:00 PM') || startPart.includes('02:00 PM') || startPart.includes('03:00 PM') || startPart.includes('04:00 PM')) return 'afternoon';
+        // Evening: 5 PM to 8:59 PM
+        if (startPart.includes('05:00 PM') || startPart.includes('06:00 PM') || startPart.includes('07:00 PM') || startPart.includes('08:00 PM')) return 'evening';
         return 'night';
     }
 
@@ -144,16 +162,105 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!isBooked) {
                 btn.onclick = () => {
-                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    selectedSlot = { time: time, price: price };
+                    if (currentService.startsWith('turf')) {
+                        // Multi-slot logic for turf
+                        if (selectedSlotTimes.includes(time)) {
+                            selectedSlotTimes = selectedSlotTimes.filter(t => t !== time);
+                        } else {
+                            selectedSlotTimes.push(time);
+                        }
+                        
+                        if (selectedSlotTimes.length > 0) {
+                            // Sort selected slots by start time
+                            selectedSlotTimes.sort((a, b) => timeToMinutes(a.split(' - ')[0]) - timeToMinutes(b.split(' - ')[0]));
+                            
+                            const firstSlot = selectedSlotTimes[0];
+                            const lastSlot = selectedSlotTimes[selectedSlotTimes.length - 1];
+                            
+                            const startMin = timeToMinutes(firstSlot.split(' - ')[0]);
+                            let endMin = timeToMinutes(lastSlot.split(' - ')[1]);
+                            if (endMin <= startMin) endMin += 1440;
+                            
+                            const totalDuration = (endMin - startMin) / 60;
+                            
+                            // Update selectedSlot to the first one but with recalculated duration
+                            selectedSlot = { time: firstSlot, price: getTurfPrice(firstSlot) };
+                            
+                            // Update duration dropdown automatically
+                            updateDurationDropdown(totalDuration);
+                        } else {
+                            selectedSlot = null;
+                        }
+                    } else {
+                        // Swimming: Single selection logic
+                        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedSlot = { time: time, price: price };
+                        selectedSlotTimes = [time];
+                    }
+                    
+                    updateSlotHighlights();
                     updateButtonStates();
                 };
             }
             const cat = getCategory(time);
             if (containers[cat]) containers[cat].appendChild(btn);
         });
+        updateSlotHighlights();
         updateButtonStates();
+    }
+
+    function updateDurationDropdown(val) {
+        const sel = document.getElementById('turf-duration');
+        if (!sel) return;
+        let found = false;
+        for (let i = 0; i < sel.options.length; i++) {
+            if (parseFloat(sel.options[i].value) === val) {
+                sel.value = val;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            const opt = new Option(`${val} Hour${val > 1 ? 's' : ''}`, val);
+            sel.add(opt);
+            sel.value = val;
+        }
+    }
+
+    function updateSlotHighlights() {
+        if (!currentService.startsWith('turf')) return;
+        
+        document.querySelectorAll('.slot-btn').forEach(btn => {
+            const btnTimeSpan = btn.querySelector('.slot-time');
+            if (!btnTimeSpan) return;
+            
+            const btnTimeStr = btnTimeSpan.textContent;
+            
+            // Only highlight slots that are explicitly in the selected list
+            if (selectedSlotTimes.includes(btnTimeStr)) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
+
+    function syncSelectionFromDuration() {
+        if (!selectedSlot || !currentService.startsWith('turf')) return;
+        const duration = parseFloat(document.getElementById('turf-duration').value);
+        const startTime = timeToMinutes(selectedSlot.time.split(' - ')[0]);
+        const endTime = startTime + (duration * 60);
+        
+        selectedSlotTimes = [];
+        const rawSlots = JSON.parse(localStorage.getItem('k6_tslots')) || DEFAULT_TSLOTS;
+        rawSlots.forEach(time => {
+            const slotStart = timeToMinutes(time.split(' - ')[0]);
+            // Add all slots that fall within this duration
+            if (slotStart >= startTime && slotStart < endTime) {
+                selectedSlotTimes.push(time);
+            }
+        });
     }
 
     function getTurfPrice(time) {
@@ -341,8 +448,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const eventType = inp.tagName === 'INPUT' && inp.type === 'number' ? 'input' : 'change';
             inp.addEventListener(eventType, () => {
                 if (inp.id === 'turf-date' || inp.id === 'swim-date') {
-                    selectedSlot = null;
+                    resetSelection();
                     initBookingPage();
+                } else if (inp.id === 'turf-duration') {
+                    syncSelectionFromDuration();
+                    updateSlotHighlights();
+                    updateButtonStates();
                 } else {
                     updateButtonStates();
                 }
